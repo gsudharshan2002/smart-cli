@@ -3,6 +3,7 @@
 A Python CLI app powered by AI.
 
 ## Features
+- RAG 
 - Sampling & Temperature
 - Top-K & Top-P
 - Grounding
