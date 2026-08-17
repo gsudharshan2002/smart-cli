@@ -1,0 +1,1040 @@
+{
+  "golden_set": [
+    {
+      "id": 1,
+      "q": "What is the default value of the retry_backoff_ms config option?",
+      "src": "devtools_config_reference.txt",
+      "correct_chunk_id": 1,
+      "token": "symbol",
+      "note": "exact token retry_backoff_ms; also the plain-English section"
+    },
+    {
+      "id": 2,
+      "q": "In which SDK release was retry_backoff_ms first added?",
+      "src": "devtools_client_sdk.txt",
+      "correct_chunk_id": 2,
+      "token": "version",
+      "note": "answer v2.0.0; v2/v3 retry docs are semantically near-identical"
+    },
+    {
+      "id": 3,
+      "q": "What does the error code ERR_RETRY_EXHAUSTED mean?",
+      "src": "devtools_error_codes.txt",
+      "correct_chunk_id": 1,
+      "token": "error_code",
+      "note": "exact error code token"
+    },
+    {
+      "id": 4,
+      "q": "I keep hitting ERR_HTTP_429_RATE_LIMIT. What does it mean and how do I fix it?",
+      "src": "devtools_error_codes.txt",
+      "correct_chunk_id": 2,
+      "token": "error_code",
+      "note": "exact error code token"
+    },
+    {
+      "id": 5,
+      "q": "What changed in retry() in the v3.2.0 release?",
+      "src": "devtools_client_sdk.txt",
+      "correct_chunk_id": 4,
+      "token": "version",
+      "note": "exact version string; vector may grab v1/v2 retry docs"
+    },
+    {
+      "id": 6,
+      "q": "Which environment variable does the SDK read to authenticate on connect()?",
+      "src": "devtools_config_reference.txt",
+      "correct_chunk_id": 0,
+      "token": "symbol",
+      "note": "exact symbol token"
+    },
+    {
+      "id": 7,
+      "q": "How do I make the client automatically retry a failed request?",
+      "src": "devtools_client_sdk.txt",
+      "correct_chunk_id": 4,
+      "token": "semantic",
+      "note": "BONUS scenario: top-3 should be retry() across v1/v2/v3"
+    },
+    {
+      "id": 8,
+      "q": "My integration keeps timing out. Which error should I handle?",
+      "src": "devtools_error_codes.txt",
+      "correct_chunk_id": 3,
+      "token": "semantic",
+      "note": "timeout appears in config + error docs"
+    },
+    {
+      "id": 9,
+      "q": "Can the SDK keep working when the network is down?",
+      "src": "devtools_config_reference.txt",
+      "correct_chunk_id": 4,
+      "token": "semantic",
+      "note": "offline_mode flag, v3.2.0"
+    },
+    {
+      "id": 10,
+      "q": "How do I open a persistent connection to the backend?",
+      "src": "devtools_client_sdk.txt",
+      "correct_chunk_id": 6,
+      "token": "semantic",
+      "note": "connect() method docs"
+    },
+    {
+      "id": 11,
+      "q": "What happens if I set max_retries to zero?",
+      "src": "devtools_config_reference.txt",
+      "correct_chunk_id": 3,
+      "token": "semantic",
+      "note": "max_retries section"
+    },
+    {
+      "id": 12,
+      "q": "What is the maximum request payload size in bytes?",
+      "src": null,
+      "correct_chunk_id": null,
+      "token": "not_in_corpus",
+      "note": "no chunk documents payload size -> Not-In-Corpus by design"
+    }
+  ],
+  "rrf_k": 60,
+  "top_k": 3,
+  "baseline": {
+    "hits": 4,
+    "total": 12,
+    "hit_rate": 0.3333333333333333,
+    "p50_ms": 22.3,
+    "rows": [
+      {
+        "id": 1,
+        "q": "What is the default value of the retry_backoff_ms config option?",
+        "token": "symbol",
+        "src": "devtools_config_reference.txt",
+        "correct_chunk_id": 1,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 22.9,
+        "top3": [
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 4,
+            "vec": 0.669,
+            "bm25": null,
+            "rrf": 0.0164,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 5,
+            "vec": 0.65,
+            "bm25": null,
+            "rrf": 0.0161,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 3,
+            "vec": 0.628,
+            "bm25": null,
+            "rrf": 0.0159,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "q": "In which SDK release was retry_backoff_ms first added?",
+        "token": "version",
+        "src": "devtools_client_sdk.txt",
+        "correct_chunk_id": 2,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 22.9,
+        "top3": [
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 4,
+            "vec": 0.573,
+            "bm25": null,
+            "rrf": 0.0164,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 0,
+            "vec": 0.567,
+            "bm25": null,
+            "rrf": 0.0161,
+            "mmr": null
+          },
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 5,
+            "vec": 0.553,
+            "bm25": null,
+            "rrf": 0.0159,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "q": "What does the error code ERR_RETRY_EXHAUSTED mean?",
+        "token": "error_code",
+        "src": "devtools_error_codes.txt",
+        "correct_chunk_id": 1,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 32.4,
+        "top3": [
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 4,
+            "vec": 0.715,
+            "bm25": null,
+            "rrf": 0.0164,
+            "mmr": null
+          },
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 3,
+            "vec": 0.685,
+            "bm25": null,
+            "rrf": 0.0161,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 4,
+            "vec": 0.671,
+            "bm25": null,
+            "rrf": 0.0159,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "q": "I keep hitting ERR_HTTP_429_RATE_LIMIT. What does it mean and how do I fix it?",
+        "token": "error_code",
+        "src": "devtools_error_codes.txt",
+        "correct_chunk_id": 2,
+        "hit": true,
+        "rank": 2,
+        "latency_ms": 20.6,
+        "top3": [
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 3,
+            "vec": 0.653,
+            "bm25": null,
+            "rrf": 0.0164,
+            "mmr": null
+          },
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 2,
+            "vec": 0.572,
+            "bm25": null,
+            "rrf": 0.0161,
+            "mmr": null
+          },
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 4,
+            "vec": 0.384,
+            "bm25": null,
+            "rrf": 0.0159,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "q": "What changed in retry() in the v3.2.0 release?",
+        "token": "version",
+        "src": "devtools_client_sdk.txt",
+        "correct_chunk_id": 4,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 27.3,
+        "top3": [
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 3,
+            "vec": 0.768,
+            "bm25": null,
+            "rrf": 0.0164,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 5,
+            "vec": 0.763,
+            "bm25": null,
+            "rrf": 0.0161,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 1,
+            "vec": 0.758,
+            "bm25": null,
+            "rrf": 0.0159,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "q": "Which environment variable does the SDK read to authenticate on connect()?",
+        "token": "symbol",
+        "src": "devtools_config_reference.txt",
+        "correct_chunk_id": 0,
+        "hit": true,
+        "rank": 1,
+        "latency_ms": 12.2,
+        "top3": [
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 0,
+            "vec": 0.639,
+            "bm25": null,
+            "rrf": 0.0164,
+            "mmr": null
+          },
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 1,
+            "vec": 0.53,
+            "bm25": null,
+            "rrf": 0.0161,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 7,
+            "vec": 0.463,
+            "bm25": null,
+            "rrf": 0.0159,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "q": "How do I make the client automatically retry a failed request?",
+        "token": "semantic",
+        "src": "devtools_client_sdk.txt",
+        "correct_chunk_id": 4,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 22.0,
+        "top3": [
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 4,
+            "vec": 0.614,
+            "bm25": null,
+            "rrf": 0.0164,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 3,
+            "vec": 0.576,
+            "bm25": null,
+            "rrf": 0.0161,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 2,
+            "vec": 0.57,
+            "bm25": null,
+            "rrf": 0.0159,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "q": "My integration keeps timing out. Which error should I handle?",
+        "token": "semantic",
+        "src": "devtools_error_codes.txt",
+        "correct_chunk_id": 3,
+        "hit": true,
+        "rank": 2,
+        "latency_ms": 22.7,
+        "top3": [
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 4,
+            "vec": 0.533,
+            "bm25": null,
+            "rrf": 0.0164,
+            "mmr": null
+          },
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 3,
+            "vec": 0.459,
+            "bm25": null,
+            "rrf": 0.0161,
+            "mmr": null
+          },
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 0,
+            "vec": 0.397,
+            "bm25": null,
+            "rrf": 0.0159,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "q": "Can the SDK keep working when the network is down?",
+        "token": "semantic",
+        "src": "devtools_config_reference.txt",
+        "correct_chunk_id": 4,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 12.5,
+        "top3": [
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 6,
+            "vec": 0.581,
+            "bm25": null,
+            "rrf": 0.0164,
+            "mmr": null
+          },
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 5,
+            "vec": 0.549,
+            "bm25": null,
+            "rrf": 0.0161,
+            "mmr": null
+          },
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 6,
+            "vec": 0.383,
+            "bm25": null,
+            "rrf": 0.0159,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "q": "How do I open a persistent connection to the backend?",
+        "token": "semantic",
+        "src": "devtools_client_sdk.txt",
+        "correct_chunk_id": 6,
+        "hit": true,
+        "rank": 3,
+        "latency_ms": 10.1,
+        "top3": [
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 7,
+            "vec": 0.484,
+            "bm25": null,
+            "rrf": 0.0164,
+            "mmr": null
+          },
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 1,
+            "vec": 0.429,
+            "bm25": null,
+            "rrf": 0.0161,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 6,
+            "vec": 0.419,
+            "bm25": null,
+            "rrf": 0.0159,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "q": "What happens if I set max_retries to zero?",
+        "token": "semantic",
+        "src": "devtools_config_reference.txt",
+        "correct_chunk_id": 3,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 11.2,
+        "top3": [
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 4,
+            "vec": 0.489,
+            "bm25": null,
+            "rrf": 0.0164,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 3,
+            "vec": 0.429,
+            "bm25": null,
+            "rrf": 0.0161,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 4,
+            "vec": 0.396,
+            "bm25": null,
+            "rrf": 0.0159,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "q": "What is the maximum request payload size in bytes?",
+        "token": "not_in_corpus",
+        "src": null,
+        "correct_chunk_id": null,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 22.6,
+        "top3": [
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 3,
+            "vec": 0.378,
+            "bm25": null,
+            "rrf": 0.0164,
+            "mmr": null
+          },
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 4,
+            "vec": 0.344,
+            "bm25": null,
+            "rrf": 0.0161,
+            "mmr": null
+          },
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 2,
+            "vec": 0.341,
+            "bm25": null,
+            "rrf": 0.0159,
+            "mmr": null
+          }
+        ]
+      }
+    ]
+  },
+  "after": {
+    "hits": 4,
+    "total": 12,
+    "hit_rate": 0.3333333333333333,
+    "p50_ms": 17.5,
+    "rows": [
+      {
+        "id": 1,
+        "q": "What is the default value of the retry_backoff_ms config option?",
+        "token": "symbol",
+        "src": "devtools_config_reference.txt",
+        "correct_chunk_id": 1,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 22.9,
+        "top3": [
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 4,
+            "vec": 0.669,
+            "bm25": null,
+            "rrf": 0.032,
+            "mmr": null
+          },
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 2,
+            "vec": 0.62,
+            "bm25": null,
+            "rrf": 0.0318,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 5,
+            "vec": 0.65,
+            "bm25": null,
+            "rrf": 0.0313,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 2,
+        "q": "In which SDK release was retry_backoff_ms first added?",
+        "token": "version",
+        "src": "devtools_client_sdk.txt",
+        "correct_chunk_id": 2,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 45.1,
+        "top3": [
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 4,
+            "vec": 0.573,
+            "bm25": null,
+            "rrf": 0.0323,
+            "mmr": null
+          },
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 1,
+            "vec": 0.523,
+            "bm25": null,
+            "rrf": 0.0313,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 3,
+            "vec": 0.541,
+            "bm25": null,
+            "rrf": 0.0308,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 3,
+        "q": "What does the error code ERR_RETRY_EXHAUSTED mean?",
+        "token": "error_code",
+        "src": "devtools_error_codes.txt",
+        "correct_chunk_id": 1,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 30.6,
+        "top3": [
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 2,
+            "vec": 0.65,
+            "bm25": null,
+            "rrf": 0.0318,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 3,
+            "vec": 0.669,
+            "bm25": null,
+            "rrf": 0.0308,
+            "mmr": null
+          },
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 4,
+            "vec": 0.715,
+            "bm25": null,
+            "rrf": 0.0164,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 4,
+        "q": "I keep hitting ERR_HTTP_429_RATE_LIMIT. What does it mean and how do I fix it?",
+        "token": "error_code",
+        "src": "devtools_error_codes.txt",
+        "correct_chunk_id": 2,
+        "hit": true,
+        "rank": 2,
+        "latency_ms": 31.5,
+        "top3": [
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 3,
+            "vec": 0.653,
+            "bm25": null,
+            "rrf": 0.0325,
+            "mmr": null
+          },
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 2,
+            "vec": 0.572,
+            "bm25": null,
+            "rrf": 0.0325,
+            "mmr": null
+          },
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 1,
+            "vec": 0.383,
+            "bm25": null,
+            "rrf": 0.0312,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 5,
+        "q": "What changed in retry() in the v3.2.0 release?",
+        "token": "version",
+        "src": "devtools_client_sdk.txt",
+        "correct_chunk_id": 4,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 17.3,
+        "top3": [
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 3,
+            "vec": 0.768,
+            "bm25": null,
+            "rrf": 0.0328,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 5,
+            "vec": 0.763,
+            "bm25": null,
+            "rrf": 0.0313,
+            "mmr": null
+          },
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 3,
+            "vec": 0.652,
+            "bm25": null,
+            "rrf": 0.0313,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 6,
+        "q": "Which environment variable does the SDK read to authenticate on connect()?",
+        "token": "symbol",
+        "src": "devtools_config_reference.txt",
+        "correct_chunk_id": 0,
+        "hit": true,
+        "rank": 1,
+        "latency_ms": 16.2,
+        "top3": [
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 0,
+            "vec": 0.639,
+            "bm25": null,
+            "rrf": 0.0328,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 7,
+            "vec": 0.463,
+            "bm25": null,
+            "rrf": 0.032,
+            "mmr": null
+          },
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 1,
+            "vec": 0.53,
+            "bm25": null,
+            "rrf": 0.0318,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 7,
+        "q": "How do I make the client automatically retry a failed request?",
+        "token": "semantic",
+        "src": "devtools_client_sdk.txt",
+        "correct_chunk_id": 4,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 11.8,
+        "top3": [
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 4,
+            "vec": 0.614,
+            "bm25": null,
+            "rrf": 0.0315,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 1,
+            "vec": 0.561,
+            "bm25": null,
+            "rrf": 0.0315,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 0,
+            "vec": 23.507,
+            "bm25": 23.507,
+            "rrf": 0.0164,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 8,
+        "q": "My integration keeps timing out. Which error should I handle?",
+        "token": "semantic",
+        "src": "devtools_error_codes.txt",
+        "correct_chunk_id": 3,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 19.2,
+        "top3": [
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 0,
+            "vec": 0.397,
+            "bm25": null,
+            "rrf": 0.0317,
+            "mmr": null
+          },
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 4,
+            "vec": 0.533,
+            "bm25": null,
+            "rrf": 0.0164,
+            "mmr": null
+          },
+          {
+            "source": "Remote Work Policy and Application (PDF).pdf",
+            "cid": 74,
+            "vec": 13.405,
+            "bm25": 13.405,
+            "rrf": 0.0164,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 9,
+        "q": "Can the SDK keep working when the network is down?",
+        "token": "semantic",
+        "src": "devtools_config_reference.txt",
+        "correct_chunk_id": 4,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 11.1,
+        "top3": [
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 5,
+            "vec": 0.549,
+            "bm25": null,
+            "rrf": 0.0325,
+            "mmr": null
+          },
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 6,
+            "vec": 0.383,
+            "bm25": null,
+            "rrf": 0.032,
+            "mmr": null
+          },
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 6,
+            "vec": 0.581,
+            "bm25": null,
+            "rrf": 0.0318,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 10,
+        "q": "How do I open a persistent connection to the backend?",
+        "token": "semantic",
+        "src": "devtools_client_sdk.txt",
+        "correct_chunk_id": 6,
+        "hit": true,
+        "rank": 2,
+        "latency_ms": 11.0,
+        "top3": [
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 7,
+            "vec": 0.484,
+            "bm25": null,
+            "rrf": 0.0328,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 6,
+            "vec": 0.419,
+            "bm25": null,
+            "rrf": 0.032,
+            "mmr": null
+          },
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 1,
+            "vec": 0.429,
+            "bm25": null,
+            "rrf": 0.0161,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 11,
+        "q": "What happens if I set max_retries to zero?",
+        "token": "semantic",
+        "src": "devtools_config_reference.txt",
+        "correct_chunk_id": 3,
+        "hit": true,
+        "rank": 3,
+        "latency_ms": 12.3,
+        "top3": [
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 4,
+            "vec": 0.489,
+            "bm25": null,
+            "rrf": 0.0325,
+            "mmr": null
+          },
+          {
+            "source": "devtools_client_sdk.txt",
+            "cid": 3,
+            "vec": 0.429,
+            "bm25": null,
+            "rrf": 0.032,
+            "mmr": null
+          },
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 3,
+            "vec": 0.378,
+            "bm25": null,
+            "rrf": 0.0318,
+            "mmr": null
+          }
+        ]
+      },
+      {
+        "id": 12,
+        "q": "What is the maximum request payload size in bytes?",
+        "token": "not_in_corpus",
+        "src": null,
+        "correct_chunk_id": null,
+        "hit": false,
+        "rank": -1,
+        "latency_ms": 17.8,
+        "top3": [
+          {
+            "source": "devtools_config_reference.txt",
+            "cid": 4,
+            "vec": 0.344,
+            "bm25": null,
+            "rrf": 0.0323,
+            "mmr": null
+          },
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 3,
+            "vec": 0.378,
+            "bm25": null,
+            "rrf": 0.032,
+            "mmr": null
+          },
+          {
+            "source": "devtools_error_codes.txt",
+            "cid": 5,
+            "vec": 10.989,
+            "bm25": 10.989,
+            "rrf": 0.0164,
+            "mmr": null
+          }
+        ]
+      }
+    ]
+  },
+  "mmr": {
+    "lambda_best": 0.4,
+    "row": {
+      "id": 7,
+      "q": "How do I make the client automatically retry a failed request?",
+      "token": "semantic",
+      "src": "devtools_client_sdk.txt",
+      "correct_chunk_id": 4,
+      "hit": false,
+      "rank": -1,
+      "latency_ms": 62.5,
+      "top3": [
+        {
+          "source": "devtools_config_reference.txt",
+          "cid": 4,
+          "vec": 0.614,
+          "bm25": null,
+          "rrf": 0.0315,
+          "mmr": 0.4298
+        },
+        {
+          "source": "devtools_client_sdk.txt",
+          "cid": 1,
+          "vec": 0.561,
+          "bm25": null,
+          "rrf": 0.0315,
+          "mmr": 0.18
+        },
+        {
+          "source": "devtools_client_sdk.txt",
+          "cid": 2,
+          "vec": 0.57,
+          "bm25": null,
+          "rrf": 0.0159,
+          "mmr": 0.1641
+        }
+      ],
+      "top3_mmr": [
+        {
+          "source": "devtools_config_reference.txt",
+          "cid": 4,
+          "mmr": 0.4298
+        },
+        {
+          "source": "devtools_client_sdk.txt",
+          "cid": 1,
+          "mmr": 0.18
+        },
+        {
+          "source": "devtools_client_sdk.txt",
+          "cid": 2,
+          "mmr": 0.1641
+        }
+      ]
+    },
+    "diversity_without_mmr": 0.61,
+    "diversity_with_mmr": 0.61
+  }
+}

@@ -1,6 +1,7 @@
 # src/features/rag_chat.py - RAG CLI Feature
 
 from src.rag.rag_engine import RAGEngine
+from src.features.retrieval_lab import run as run_lab
 from src.utils.printer import (
     print_feature_header,
     print_concept,
@@ -105,9 +106,11 @@ def chat_with_documents(engine: RAGEngine):
     )
 
     print_info(
+        "Retrieval: hybrid (vector + BM25, RRF fusion) "
+        "+ cross-encoder rerank\n"
         "Ask any question about your documents!\n"
         "Type 'quit' to stop chatting\n"
-        "Type 'sources' to see what's indexed"
+        "Type 'sources' to show what's indexed"
     )
 
     print_divider()
@@ -163,11 +166,36 @@ def chat_with_documents(engine: RAGEngine):
             for i, chunk in enumerate(
                 result.get("chunks", []), 1
             ):
+                # Which techniques matched this chunk?
+                matched = []
+                if chunk.get("score") is not None:
+                    matched.append("vector")
+                if chunk.get("bm25_rank") is not None:
+                    matched.append("bm25")
+                if chunk.get("rerank_score") is not None:
+                    matched.append("rerank")
+
+                score_parts = []
+                if chunk.get("rrf_score") is not None:
+                    score_parts.append(
+                        f"RRF: {round(chunk['rrf_score'], 4)}"
+                    )
+                if chunk.get("score") is not None:
+                    score_parts.append(
+                        f"vector: {round(chunk['score'], 3)}"
+                    )
+                if chunk.get("rerank_score") is not None:
+                    score_parts.append(
+                        f"rerank: {round(chunk['rerank_score'], 3)}"
+                    )
+
                 print_info(
                     f"Chunk {i}:\n"
-                    f"  Source: {chunk['metadata'].get('source')}\n"
-                    f"  Score:  {round(chunk['score'], 3)}\n"
-                    f"  Text:   {chunk['text'][:300]}..."
+                    f"  Source:   "
+                    f"{chunk['metadata'].get('source')}\n"
+                    f"  Scores:   {', '.join(score_parts)}\n"
+                    f"  Matched:  {', '.join(matched)}\n"
+                    f"  Text:     {chunk['text'][:300]}..."
                 )
 
         print_divider()
@@ -205,11 +233,13 @@ def run():
         "      ↓\n"
         "  Accurate Answer from YOUR docs!\n\n"
         "Stack:\n"
-        "  📄 Loader    → pypdf (PDF reader)\n"
-        "  ✂️  Chunker   → Smart text splitter\n"
-        "  🔢 Embedder  → all-MiniLM-L6-v2 (FREE)\n"
-        "  🗄️  Vector DB → ChromaDB (LOCAL)\n"
-        "  🤖 LLM       → Groq llama-3.3-70b"
+        "  Loader    -> pypdf (PDF reader)\n"
+        "  Chunker   -> Smart text splitter\n"
+        "  Embedder  -> all-MiniLM-L6-v2 (free)\n"
+        "  VectorDB  -> ChromaDB (local)\n"
+        "  Keyword   -> BM25 + RRF hybrid fusion\n"
+        "  Reranker  -> cross-encoder/ms-marco-MiniLM-L-6-v2\n"
+        "  LLM       -> Groq llama-3.3-70b"
     )
 
     print_divider()
@@ -230,6 +260,7 @@ def run():
             "  [green]3[/green] → Chat with documents\n"
             "  [green]4[/green] → Re-index a document\n"
             "  [green]5[/green] → Clear database\n"
+            "  [green]6[/green] -> Retrieval Lab (dev tools)\n"
             "  [green]0[/green] → Back to main menu\n"
         )
 
@@ -259,7 +290,7 @@ def run():
             show_documents(engine)
 
             doc_name = get_user_input(
-                "📝 Enter document name to re-index: "
+                "Enter document name to re-index: "
             )
 
             import os
@@ -284,7 +315,7 @@ def run():
             print_divider()
 
             confirm = get_user_input(
-                "⚠️  Delete ALL indexed data? (yes/no): "
+                "Delete ALL indexed data? (yes/no): "
             )
 
             if confirm.lower() in ["yes", "y"]:
@@ -292,6 +323,10 @@ def run():
                 print_success("Database cleared!")
             else:
                 print_info("Cancelled!")
+
+        elif choice == "6":
+            print_divider()
+            run_lab(engine)
 
         else:
             print_error("Invalid option!")

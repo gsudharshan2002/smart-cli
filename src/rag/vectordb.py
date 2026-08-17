@@ -17,14 +17,19 @@ class VectorDB:
     Persists: Saves to disk at chroma_db/
     """
 
-    def __init__(self):
+    def __init__(self, quiet: bool = False):
         self.client = None
         self.collection = None
+        self.quiet = quiet
+
+    def _log(self, message: str):
+        if not self.quiet:
+            print(message)
 
     def connect(self):
         """Connect to ChromaDB"""
         if self.client is None:
-            print(
+            self._log(
                 f"    🗄️  Connecting to ChromaDB at: "
                 f"{CHROMA_DB_PATH}"
             )
@@ -33,7 +38,7 @@ class VectorDB:
                 path=CHROMA_DB_PATH
             )
 
-            print("    ✅ ChromaDB connected!")
+            self._log("    ✅ ChromaDB connected!")
 
         return self.client
 
@@ -46,7 +51,7 @@ class VectorDB:
             metadata={"hnsw:space": "cosine"}
         )
 
-        print(
+        self._log(
             f"    📁 Collection: '{name}' "
             f"({self.collection.count()} docs)"
         )
@@ -101,10 +106,10 @@ class VectorDB:
                 metadatas=metadatas[i:batch_end]
             )
 
-            print(
-                f"    💾 Stored chunks "
-                f"{i+1}-{batch_end} of {total}"
-            )
+        print(
+            f"    💾 Stored chunks "
+            f"{i+1}-{batch_end} of {total}"
+        )
 
         print(
             f"    ✅ Total in DB: "
@@ -140,6 +145,7 @@ class VectorDB:
         chunks = []
         for i in range(len(results["documents"][0])):
             chunks.append({
+                "id": results["ids"][0][i],
                 "text": results["documents"][0][i],
                 "metadata": results["metadatas"][0][i],
                 "score": 1 - results["distances"][0][i]

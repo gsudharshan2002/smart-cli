@@ -1,0 +1,23 @@
+DEVELOPER TOOLS CLIENT SDK - METHOD REFERENCE
+
+The DevTools Client SDK is the official library for talking to the Developer Tools backend. This reference documents the public methods, their version history, and known breaking changes so that integrators can upgrade safely.
+
+2.1 retry() method - version 1.2.0 (legacy)
+
+retry() was introduced in v1.2.0. It automatically re-submits a failed request using the fixed retry policy compiled into the library at build time. It accepts a single parameter, the request object, and returns either a response or raises RetryError when attempts are exhausted. No configuration options exist in this version; the delay between attempts is hard coded to 500 milliseconds.
+
+2.2 retry() method - version 2.0.0
+
+retry() in v2.0.0 adds a customization parameter. Callers may now pass retry_backoff_ms to control the base delay in milliseconds between attempts, plus max_retries to cap the number of attempts. The default retry_backoff_ms is 500 and the default max_retries is 5, and the delay is fixed for every attempt. The function still raises RetryError when attempts are exhausted.
+
+2.3 retry() method - version 3.2.0 (current)
+
+retry() in v3.2.0 switches the delay policy to exponential backoff. retry_backoff_ms remains the base delay, 500 by default, and each attempt after the first doubles the delay, up to a maximum backoff cap. This version also adds the offline_mode flag; when enabled, retry() queues requests locally and replays them when connectivity returns. RetryError is still raised when attempts are exhausted and offline mode is off.
+
+2.4 connect() method
+
+connect() establishes the persistent connection to the backend. By default connect() uses the HTTPS endpoint registered in the production console, and reads the DEVTOOLS_API_KEY environment variable to build the authentication header. connect() raises AuthError when the key is missing or invalid.
+
+2.5 send() method
+
+send() transmits a single request without retry semantics. send() is the low level primitive that retry() wraps internally. Use send() when the caller wants full control over error handling and never wants automatic retries, for example in a batch migration job.

@@ -5,7 +5,13 @@ from src.rag.loader import DocumentLoader
 from src.rag.chunker import TextChunker
 from src.rag.embedder import Embedder
 from src.rag.vectordb import VectorDB
-from src.rag.retriever import Retriever
+from src.rag.hybrid import SmartRetriever
+from src.rag.retriever import build_context
+from src.rag.config import (
+    USE_HYBRID,
+    USE_RERANK,
+    USE_QUERY_REWRITE
+)
 from src.ai_client import ask_ai
 
 
@@ -17,7 +23,8 @@ class RAGEngine:
     PDF → Load → Chunk → Embed → Store in ChromaDB
 
     Query Flow:
-    Question → Embed → Retrieve → LLM → Answer
+    Question → Hybrid retrieve (vector + BM25 + RRF + rerank)
+             → LLM → Answer
     """
 
     def __init__(self):
@@ -25,7 +32,7 @@ class RAGEngine:
         self.chunker = TextChunker()
         self.embedder = Embedder()
         self.db = VectorDB()
-        self.retriever = Retriever()
+        self.retriever = SmartRetriever()
 
 
     def index_document(self, path: str) -> dict:
@@ -160,14 +167,21 @@ class RAGEngine:
 
         print(f"\n🔍 Processing query...")
 
-        # ✅ Step 1: Retrieve
+        # ✅ Step 1: Retrieve (merged pipeline - hybrid + rerank)
         print("    Step 1: Retrieving relevant chunks...")
-        retrieval = self.retriever.retrieve_with_context(
+
+        retrieval = self.retriever.retrieve(
             query=question,
-            top_k=top_k
+            top_k=top_k,
+            use_bm25=USE_HYBRID,
+            use_rerank=USE_RERANK,
+            use_rewrite=USE_QUERY_REWRITE,
+            verbose=True
         )
 
-        if not retrieval["found"]:
+        chunks = retrieval["chunks"]
+
+        if not chunks:
             return {
                 "question": question,
                 "answer": (
@@ -181,17 +195,59 @@ class RAGEngine:
                 "context": ""
             }
 
+        mode = "+".join(filter(None, [
+            "vector" if not USE_HYBRID else "hybrid",
+            "rerank" if USE_RERANK else "",
+            "rewrite" if USE_QUERY_REWRITE else "",
+        ]))
+        print(f"    ℹ️  Retrieval mode: {mode}")
+
         time.sleep(0.4)
 
         # ✅ Step 2: Build prompt with context
         print("    Step 2: Building RAG prompt...")
+
+        answer = self.answer_from_chunks(question, chunks)
+
+        sources = list(set(
+            c["metadata"].get("source", "unknown")
+            for c in chunks
+        ))
+
+        return {
+            "question": question,
+            "answer": answer,
+            "sources": sources,
+            "chunks_used": len(chunks),
+            "chunks": chunks,
+            "context": build_context(chunks),
+            "retrieval": retrieval
+        }
+
+    def answer_from_chunks(
+        self,
+        question: str,
+        chunks: list,
+        verbose: bool = False
+    ) -> str:
+        """
+        Generate an LLM answer from a given list of chunks.
+
+        Reused by the Week 5 inspection view and failure labeling,
+        so the answer can be judged against exactly what retrieval
+        returned (without running the whole pipeline again).
+        """
+        context = build_context(chunks)
+
+        if verbose:
+            print("    Step 2: Building RAG prompt...")
 
         rag_prompt = f"""
 You are a helpful assistant that answers questions
 based ONLY on the provided document context.
 
 CONTEXT FROM DOCUMENTS:
-{retrieval['context']}
+{context}
 
 USER QUESTION:
 {question}
@@ -207,12 +263,10 @@ INSTRUCTIONS:
 - Do not make up information, and never invent a chunk_id that wasn't shown to you
 """
 
-        time.sleep(0.4)
+        if verbose:
+            print("    Step 3: Generating answer with LLM...")
 
-        # ✅ Step 3: Generate answer
-        print("    Step 3: Generating answer with LLM...")
-
-        answer = ask_ai(
+        return ask_ai(
             prompt=rag_prompt,
             system=(
                 "You are a precise document assistant. "
@@ -221,15 +275,6 @@ INSTRUCTIONS:
             ),
             temperature=0.1
         )
-
-        return {
-            "question": question,
-            "answer": answer,
-            "sources": retrieval["sources"],
-            "chunks_used": len(retrieval["chunks"]),
-            "chunks": retrieval["chunks"],
-            "context": retrieval["context"]
-        }
 
     def reindex_document(self, path: str) -> dict:
         """Force re-index a document"""
