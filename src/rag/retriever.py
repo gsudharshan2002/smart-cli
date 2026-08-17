@@ -19,7 +19,8 @@ class Retriever:
     def retrieve(
         self,
         query: str,
-        top_k: int = TOP_K
+        top_k: int = TOP_K,
+        where: dict = None
     ) -> list:
         """
         Find most relevant chunks for query
@@ -38,7 +39,8 @@ class Retriever:
         # ✅ Step 2: Search DB
         results = self.db.search(
             query_embedding=query_embedding,
-            top_k=top_k
+            top_k=top_k,
+            where=where
         )
 
         # ✅ Step 3: Filter low quality results
@@ -57,7 +59,8 @@ class Retriever:
     def retrieve_with_context(
         self,
         query: str,
-        top_k: int = TOP_K
+        top_k: int = TOP_K,
+        where: dict = None
     ) -> dict:
         """
         Retrieve chunks and build context string
@@ -71,7 +74,7 @@ class Retriever:
         }
         """
 
-        chunks = self.retrieve(query, top_k)
+        chunks = self.retrieve(query, top_k, where=where)
 
         if not chunks:
             return {
@@ -87,11 +90,12 @@ class Retriever:
 
         for i, chunk in enumerate(chunks, 1):
             source = chunk["metadata"].get("source", "unknown")
+            chunk_id = chunk["metadata"].get("chunk_id")
             score = round(chunk["score"], 3)
             sources.add(source)
 
             context_parts.append(
-                f"[Chunk {i} | Source: {source} | "
+                f"[chunk_id: {chunk_id} | Source: {source} | "
                 f"Relevance: {score}]\n"
                 f"{chunk['text']}"
             )

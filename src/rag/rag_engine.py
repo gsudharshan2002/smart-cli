@@ -201,8 +201,10 @@ INSTRUCTIONS:
 - If the answer is not in the context, say so clearly
 - Quote relevant parts when helpful
 - Be specific and accurate
-- Mention which source the info came from
-- Do not make up information
+- After every factual claim, cite the chunk_id it came from, in the exact
+  form [chunk_id: X] (X is the chunk_id number shown in that context block above)
+- If a claim draws on multiple chunks, cite all of them, e.g. [chunk_id: 3][chunk_id: 7]
+- Do not make up information, and never invent a chunk_id that wasn't shown to you
 """
 
         time.sleep(0.4)

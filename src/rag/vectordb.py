@@ -114,20 +114,27 @@ class VectorDB:
     def search(
         self,
         query_embedding: list,
-        top_k: int = TOP_K
+        top_k: int = TOP_K,
+        where: dict = None
     ) -> list:
         """
         Find most similar chunks to query
 
         Returns top_k most relevant chunks
         """
-        collection = self.get_collection()
+        query_kwargs = {
+            "query_embeddings": [query_embedding],
+            "n_results": min(top_k, self.get_collection().count()),
+            "include" :["documents", "metadatas", "distances"]
+        }
 
-        results = collection.query(
-            query_embeddings=[query_embedding],
-            n_results=min(top_k, collection.count()),
-            include=["documents", "metadatas", "distances"]
-        )
+        if where :
+            query_kwargs["where"] = where
+        
+        results = self.get_collection().query(**query_kwargs)
+        
+
+        
 
         # ✅ Format results
         chunks = []

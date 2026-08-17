@@ -8,8 +8,8 @@ CHROMA_DB_PATH = os.path.join(BASE_DIR, "chroma_db")
 EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 
 
-CHUNK_SIZE = 1000        # characters per chunk
-CHUNK_OVERLAP = 200      # overlap between chunks
+CHUNK_SIZE = 500       # characters per chunk
+CHUNK_OVERLAP = 250      # overlap between chunks
 
 TOP_K = 3                # retrieve top 3 chunks
 COLLECTION_NAME = "smart_cli_docs"
