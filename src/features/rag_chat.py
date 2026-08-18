@@ -1,12 +1,10 @@
-# src/features/rag_chat.py - RAG CLI Feature
+# src/features/rag_chat.py - RAG CLI Feature (Split-View Chat)
 
 from src.rag.rag_engine import RAGEngine
 from src.features.retrieval_lab import run as run_lab
 from src.utils.printer import (
     print_feature_header,
     print_concept,
-    print_response,
-    type_response,
     print_step,
     print_thinking,
     print_info,
@@ -18,6 +16,14 @@ from src.utils.printer import (
 )
 from src.utils.menu import get_user_input
 from rich.console import Console
+from rich.panel import Panel
+from rich.table import Table
+from rich.text import Text
+from rich.columns import Columns
+from rich.align import Align
+from rich.console import Group
+import time
+import os
 
 console = Console()
 
@@ -86,10 +92,162 @@ def index_documents(engine: RAGEngine):
     return True
 
 
-def chat_with_documents(engine: RAGEngine):
-    """Interactive chat with documents"""
+# ─────────────────────────────────────────────────────────────────────
+# Split-View Chat Components
+# ─────────────────────────────────────────────────────────────────────
 
-    # ✅ Check DB has data
+class ChatSession:
+    """Manages chat history and context for the split-view UI."""
+
+    def __init__(self, engine: RAGEngine):
+        self.engine = engine
+        self.stats = engine.get_stats()
+        self.history = []  # list of (question, answer, result_dict)
+        self.question_count = 0
+        self.current_result = None
+        self.show_context = True
+
+    def build_chat_panel(self) -> Panel:
+        """Build the left panel showing conversation history."""
+        if not self.history:
+            content = Text("Welcome to RAG Chat!\n\n")
+            content.append("Type your question below.\n", style="dim")
+            content.append("Commands: quit, context, sources, clear", style="dim cyan")
+            return Panel(
+                content,
+                title="💬 Chat",
+                border_style="cyan",
+                padding=(1, 2)
+            )
+
+        lines = []
+        for i, (q, a, _) in enumerate(self.history, 1):
+            lines.append(Text(f"Q{i}: ", style="bold green"))
+            lines.append(Text(f"{q}\n", style="white"))
+            lines.append(Text(f"A{i}: ", style="bold magenta"))
+            lines.append(Text(f"{a}\n\n", style="white"))
+
+        return Panel(
+            Group(*lines),
+            title=f"💬 Chat ({len(self.history)} messages)",
+            border_style="cyan",
+            padding=(1, 2)
+        )
+
+    def build_context_panel(self) -> Panel:
+        """Build the right panel showing retrieval context."""
+        if not self.current_result:
+            content = Text("Ask a question to see retrieval context here.", style="dim")
+            return Panel(
+                content,
+                title="🔍 Retrieval Context",
+                border_style="yellow",
+                padding=(1, 2)
+            )
+
+        chunks = self.current_result.get("chunks", [])
+        if not chunks:
+            content = Text("No chunks retrieved.", style="dim red")
+            return Panel(
+                content,
+                title="🔍 Retrieval Context",
+                border_style="yellow",
+                padding=(1, 2)
+            )
+
+        # Build context table
+        table = Table(show_header=True, header_style="bold yellow", box=None)
+        table.add_column("#", style="cyan", width=3)
+        table.add_column("Source", style="white", width=25)
+        table.add_column("Vector", justify="right", width=8)
+        table.add_column("BM25#", justify="right", width=6)
+        table.add_column("RRF#", justify="right", width=6)
+        table.add_column("Rerank", justify="right", width=8)
+
+        for i, chunk in enumerate(chunks, 1):
+            meta = chunk.get("metadata", {})
+            source = meta.get("source", "?")
+            if len(source) > 24:
+                source = source[:21] + "..."
+
+            vector_score = chunk.get("vector_score")
+            vector_str = f"{vector_score:.3f}" if vector_score is not None else "-"
+
+            bm25_rank = chunk.get("bm25_rank")
+            bm25_str = str(bm25_rank) if bm25_rank is not None else "-"
+
+            rrf_rank = chunk.get("rrf_rank")
+            rrf_str = str(rrf_rank) if rrf_rank is not None else "-"
+
+            rerank_score = chunk.get("rerank_score")
+            rerank_str = f"{rerank_score:.3f}" if rerank_score is not None else "-"
+
+            table.add_row(str(i), source, vector_str, bm25_str, rrf_str, rerank_str)
+
+        # Sources summary
+        sources = self.current_result.get("sources", [])
+        chunks_used = self.current_result.get("chunks_used", 0)
+
+        summary = Text()
+        summary.append(f"📚 Sources: {', '.join(sources)}\n", style="white")
+        summary.append(f"🔍 Chunks retrieved: {chunks_used}\n", style="dim")
+        if self.current_result.get("retrieval", {}).get("search_query"):
+            sq = self.current_result["retrieval"]["search_query"]
+            if sq != self.history[-1][0] if self.history else True:
+                summary.append(f"🔄 Rewritten: {sq[:60]}...", style="dim cyan")
+
+        content = Group(
+            Panel(table, title="Retrieved Chunks", border_style="dim", padding=(0, 1)),
+            summary
+        )
+
+        return Panel(
+            content,
+            title="🔍 Retrieval Context",
+            border_style="yellow",
+            padding=(1, 2)
+        )
+
+    def build_input_panel(self) -> Panel:
+        """Build the bottom input hint panel."""
+        return Panel(
+            Text.from_markup(
+                "[bold green]Your question:[/bold green]  (type 'quit' to exit, 'context' to toggle side panel)"
+            ),
+            border_style="green",
+            padding=(0, 1)
+        )
+
+    def render(self):
+        """Render the full split-view UI by clearing and redrawing."""
+        console.clear()
+
+        # Header
+        console.print(
+            Panel(
+                Text("RAG Split-View Chat", style="bold cyan"),
+                border_style="cyan"
+            )
+        )
+
+        # Main split row
+        chat_panel = self.build_chat_panel()
+        if self.show_context:
+            context_panel = self.build_context_panel()
+            # Use Columns for side-by-side layout
+            console.print(Columns([chat_panel, context_panel], equal=False, expand=True))
+        else:
+            console.print(chat_panel)
+
+        # Input hint
+        console.print(self.build_input_panel())
+        console.print()  # spacing
+
+
+def chat_with_documents(engine: RAGEngine):
+    """Interactive split-view chat with documents."""
+
+    # Check DB has data
     stats = engine.get_stats()
 
     if stats["total_chunks"] == 0:
@@ -99,31 +257,19 @@ def chat_with_documents(engine: RAGEngine):
         )
         return
 
+    session = ChatSession(engine)
+
     print_success(
-        f"Ready to chat! "
-        f"{stats['total_chunks']} chunks indexed from "
-        f"{len(stats['documents'])} documents"
+        f"Ready to chat! {stats['total_chunks']} chunks from {len(stats['documents'])} docs\n"
+        f"Retrieval: hybrid (vector + BM25, RRF) + cross-encoder rerank"
     )
-
-    print_info(
-        "Retrieval: hybrid (vector + BM25, RRF fusion) "
-        "+ cross-encoder rerank\n"
-        "Ask any question about your documents!\n"
-        "Type 'quit' to stop chatting\n"
-        "Type 'sources' to show what's indexed"
-    )
-
+    print_info("Commands: quit | context (toggle) | sources | clear")
     print_divider()
 
-    # ✅ Chat loop
-    question_count = 0
-
     while True:
-        question_count += 1
+        session.render()
 
-        question = get_user_input(
-            f"\n💬 Question {question_count}: "
-        )
+        question = get_user_input("💬 Question: ").strip()
 
         if not question:
             continue
@@ -132,82 +278,42 @@ def chat_with_documents(engine: RAGEngine):
             print_success("Chat ended!")
             break
 
-        if question.lower() == "sources":
-            show_documents(engine)
+        if question.lower() == "context":
+            session.show_context = not session.show_context
             continue
 
-        print_divider()
-        print_prompt(f"Your Question:\n{question}")
+        if question.lower() == "sources":
+            show_documents(engine)
+            print_divider()
+            continue
 
+        if question.lower() == "clear":
+            session.history.clear()
+            session.current_result = None
+            continue
+
+        session.question_count += 1
+
+        # Show thinking indicator
         print_thinking()
 
-        # ✅ Full RAG query
-        result = engine.query(
-            question=question,
-            top_k=3
-        )
+        # Full RAG query
+        result = engine.query(question=question, top_k=3)
 
-        # ✅ Show answer (streamed like real AI chat)
-        type_response(result["answer"], title="RAG Answer")
+        # Store in history
+        session.current_result = result
+        session.history.append((question, result["answer"], result))
 
-        # ✅ Show sources
-        print_info(
-            f"📚 Sources used: "
-            f"{', '.join(result['sources'])}\n"
-            f"🔍 Chunks retrieved: {result['chunks_used']}"
-        )
-
-        # ✅ Show retrieved chunks detail
-        show_chunks = get_user_input(
-            "Show retrieved chunks? (yes/no): "
-        )
-
-        if show_chunks.lower() in ["yes", "y"]:
-            for i, chunk in enumerate(
-                result.get("chunks", []), 1
-            ):
-                # Which techniques matched this chunk?
-                matched = []
-                if chunk.get("score") is not None:
-                    matched.append("vector")
-                if chunk.get("bm25_rank") is not None:
-                    matched.append("bm25")
-                if chunk.get("rerank_score") is not None:
-                    matched.append("rerank")
-
-                score_parts = []
-                if chunk.get("rrf_score") is not None:
-                    score_parts.append(
-                        f"RRF: {round(chunk['rrf_score'], 4)}"
-                    )
-                if chunk.get("score") is not None:
-                    score_parts.append(
-                        f"vector: {round(chunk['score'], 3)}"
-                    )
-                if chunk.get("rerank_score") is not None:
-                    score_parts.append(
-                        f"rerank: {round(chunk['rerank_score'], 3)}"
-                    )
-
-                print_info(
-                    f"Chunk {i}:\n"
-                    f"  Source:   "
-                    f"{chunk['metadata'].get('source')}\n"
-                    f"  Scores:   {', '.join(score_parts)}\n"
-                    f"  Matched:  {', '.join(matched)}\n"
-                    f"  Text:     {chunk['text'][:300]}..."
-                )
-
-        print_divider()
+        # Loop continues - screen will be cleared and redrawn with new history
 
 
 def run():
-    """RAG Chat Feature"""
+    """RAG Chat Feature with Split-View"""
 
-    # ✅ Header
-    print_feature_header("RAG — Document Q&A")
+    # Header
+    print_feature_header("RAG — Document Q&A (Split-View)")
 
-    # ✅ Explain concept
+    # Explain concept
     print_concept(
         "What is RAG?",
         "RAG = Retrieval Augmented Generation\n\n"
@@ -227,7 +333,7 @@ def run():
         "      ↓\n"
         "  Embed Question\n"
         "      ↓\n"
-        "  Find Similar Chunks\n"
+        "  Find Similar Chunks (hybrid + rerank)\n"
         "      ↓\n"
         "  Send to LLM with Context\n"
         "      ↓\n"
@@ -239,28 +345,29 @@ def run():
         "  VectorDB  -> ChromaDB (local)\n"
         "  Keyword   -> BM25 + RRF hybrid fusion\n"
         "  Reranker  -> cross-encoder/ms-marco-MiniLM-L-6-v2\n"
-        "  LLM       -> Groq llama-3.3-70b"
+        "  LLM       -> Groq gpt-oss-20b\n\n"
+        "UI: Split-view — Chat on left, Retrieval context on right"
     )
 
     print_divider()
 
-    # ✅ Initialize RAG Engine
+    # Initialize RAG Engine
     print_step("Init", "Starting RAG Engine...")
     engine = RAGEngine()
     print_success("RAG Engine ready!")
 
     print_divider()
 
-    # ✅ Main RAG Menu loop
+    # Main RAG Menu loop
     while True:
         console.print(
             "\n[bold cyan]RAG Options:[/bold cyan]\n"
             "  [green]1[/green] → Show documents\n"
             "  [green]2[/green] → Index documents\n"
-            "  [green]3[/green] → Chat with documents\n"
+            "  [green]3[/green] → Chat with documents (split-view)\n"
             "  [green]4[/green] → Re-index a document\n"
             "  [green]5[/green] → Clear database\n"
-            "  [green]6[/green] -> Retrieval Lab (dev tools)\n"
+            "  [green]6[/green] → Retrieval Lab (dev tools)\n"
             "  [green]0[/green] → Back to main menu\n"
         )
 
@@ -293,7 +400,6 @@ def run():
                 "Enter document name to re-index: "
             )
 
-            import os
             from src.rag.config import DATA_PATH
             doc_path = os.path.join(DATA_PATH, doc_name)
 

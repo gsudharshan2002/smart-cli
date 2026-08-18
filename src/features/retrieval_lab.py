@@ -169,7 +169,7 @@ def _chunk_row(chunk: dict, rank: int) -> list:
     return [
         str(rank),
         str(meta.get("source", "?")),
-        fmt("score"),
+        fmt("vector_score"),  # explicitly show vector score (cosine sim 0-1)
         fmt("bm25_rank") if "bm25_rank" in chunk else "-",
         fmt("rrf_rank") if "rrf_rank" in chunk else "-",
         fmt("rerank_score") if "rerank_score" in chunk else "-",

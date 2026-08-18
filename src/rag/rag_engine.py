@@ -12,7 +12,14 @@ from src.rag.config import (
     USE_RERANK,
     USE_QUERY_REWRITE
 )
-from src.ai_client import ask_ai
+from src.ai_client import ask_ai, ask_rag_structured, RAGAnswer
+
+# ── Relevance gate ────────────────────────────────────────────────
+# If the best retrieved chunk score is below this threshold, the
+# question is considered out-of-domain and the LLM is skipped entirely.
+# This prevents wasted API calls on off-topic questions.
+# Tune this value on your eval set: start at 0.35 and adjust.
+RELEVANCE_GATE_THRESHOLD = 0.35
 
 
 class RAGEngine:
@@ -207,6 +214,35 @@ class RAGEngine:
         # ✅ Step 2: Build prompt with context
         print("    Step 2: Building RAG prompt...")
 
+        # ── Relevance gate: skip LLM if retrieval is clearly off-topic ──
+        best_score = 0.0
+        for c in chunks:
+            s = c.get("rerank_score")
+            if s is None:
+                s = c.get("score", 0)
+            if s is not None and s > best_score:
+                best_score = s
+
+        if best_score < RELEVANCE_GATE_THRESHOLD:
+            print(
+                f"    ⚠️  Relevance gate: best score {best_score:.3f} "
+                f"< {RELEVANCE_GATE_THRESHOLD} — skipping LLM call"
+            )
+            return {
+                "question": question,
+                "answer": (
+                    "I could not find relevant information in the "
+                    "indexed documents to answer your question. "
+                    "Please make sure documents are indexed and try "
+                    "rephrasing your question."
+                ),
+                "sources": [],
+                "chunks_used": len(chunks),
+                "chunks": chunks,
+                "context": "",
+                "retrieval": retrieval
+            }
+
         answer = self.answer_from_chunks(question, chunks)
 
         sources = list(set(
@@ -236,6 +272,17 @@ class RAGEngine:
         Reused by the Week 5 inspection view and failure labeling,
         so the answer can be judged against exactly what retrieval
         returned (without running the whole pipeline again).
+
+        Security safeguards:
+        - Context is wrapped in <retrieved_docs> tags (see
+          build_context) so the LLM can identify it as untrusted.
+        - The system prompt explicitly warns the LLM to IGNORE any
+          instructions found inside retrieved content.
+        - This call uses ask_rag_structured which has NO tool/action
+          permissions — it can only produce text, never execute
+          actions even if injection succeeds.
+        - Output is a validated Pydantic model (RAGAnswer) so
+          malformed/injected responses are caught.
         """
         context = build_context(chunks)
 
@@ -246,7 +293,6 @@ class RAGEngine:
 You are a helpful assistant that answers questions
 based ONLY on the provided document context.
 
-CONTEXT FROM DOCUMENTS:
 {context}
 
 USER QUESTION:
@@ -261,20 +307,18 @@ INSTRUCTIONS:
   form [chunk_id: X] (X is the chunk_id number shown in that context block above)
 - If a claim draws on multiple chunks, cite all of them, e.g. [chunk_id: 3][chunk_id: 7]
 - Do not make up information, and never invent a chunk_id that wasn't shown to you
+- Return your response as structured JSON matching the requested schema
 """
 
         if verbose:
             print("    Step 3: Generating answer with LLM...")
 
-        return ask_ai(
+        result = ask_rag_structured(
             prompt=rag_prompt,
-            system=(
-                "You are a precise document assistant. "
-                "Only answer from provided context. "
-                "Never hallucinate or make up information."
-            ),
-            temperature=0.1
+            temperature=0.1,
         )
+
+        return result.answer
 
     def reindex_document(self, path: str) -> dict:
         """Force re-index a document"""

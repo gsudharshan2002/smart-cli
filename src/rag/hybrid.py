@@ -93,6 +93,8 @@ class SmartRetriever:
 
         for rank, chunk in enumerate(filtered, 1):
             chunk["vector_rank"] = rank
+            # Preserve original vector score for display
+            chunk["vector_score"] = chunk["score"]
 
         return filtered
 

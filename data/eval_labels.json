@@ -2,5 +2,13 @@
   "custom_57778": {
     "failure_kind": "wrong_document_fetched",
     "note": ""
+  },
+  "14": {
+    "failure_kind": "wrong_document_fetched",
+    "note": ""
+  },
+  "custom_3875": {
+    "failure_kind": "wrong_document_fetched",
+    "note": ""
   }
 }

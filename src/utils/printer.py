@@ -88,7 +88,7 @@ def print_table(title: str, columns: list, rows: list):
         table.add_column(col, style="bold white")
 
     for row in rows:
-        table.add_row(*row)
+        table.add_row(*[str(cell) for cell in row])
 
     console.print(table)
     console.print()

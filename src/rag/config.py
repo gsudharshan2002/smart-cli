@@ -11,6 +11,13 @@ EMBEDDING_MODEL = "all-MiniLM-L6-v2"
 CHUNK_SIZE = 500       # characters per chunk
 CHUNK_OVERLAP = 250      # overlap between chunks
 
+# Hard cap on chunk length in tokens.  A token ≈ 4 chars, so the
+# default of 300 tokens ≈ 1 200 chars.  This prevents a single chunk
+# from blowing up the retrieval context or the LLM prompt.
+# (Uses a simple estimate: tokens ≈ len(text) / 4.)
+MAX_CHUNK_TOKENS = 300
+MAX_CHUNK_CHARS = MAX_CHUNK_TOKENS * 4  # ≈ 1 200 chars
+
 TOP_K = 3                # retrieve top 3 chunks
 COLLECTION_NAME = "smart_cli_docs"
 

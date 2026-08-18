@@ -10,6 +10,11 @@ def build_context(chunks: list) -> str:
     Each chunk line:
     [chunk_id: X | Source: file.pdf | Relevance: 0.87]
     <chunk text>
+
+    The entire context is wrapped in <retrieved_docs> tags so the
+    downstream LLM prompt can explicitly mark it as untrusted content
+    that must never be followed as instructions.  See RAG_SYSTEM_PROMPT
+    in rag_engine.py for the corresponding warning.
     """
     context_parts = []
 
@@ -23,7 +28,15 @@ def build_context(chunks: list) -> str:
             f"{chunk['text']}"
         )
 
-    return "\n\n---\n\n".join(context_parts)
+    inner = "\n\n---\n\n".join(context_parts)
+
+    return (
+        "<retrieved_docs>\n"
+        "--- BEGIN RETRIEVED DOCUMENT CONTENT ---\n"
+        f"{inner}\n"
+        "--- END RETRIEVED DOCUMENT CONTENT ---\n"
+        "</retrieved_docs>"
+    )
 
 
 class Retriever:
