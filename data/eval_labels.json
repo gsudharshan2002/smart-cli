@@ -10,5 +10,9 @@
   "custom_3875": {
     "failure_kind": "wrong_document_fetched",
     "note": ""
+  },
+  "custom_62715": {
+    "failure_kind": "not_a_failure",
+    "note": ""
   }
 }

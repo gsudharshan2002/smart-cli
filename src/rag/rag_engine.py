@@ -1,6 +1,7 @@
 # src/rag/rag_engine.py - Full RAG Pipeline
 
 import time
+import uuid
 from src.rag.loader import DocumentLoader
 from src.rag.chunker import TextChunker
 from src.rag.embedder import Embedder
@@ -12,14 +13,16 @@ from src.rag.config import (
     USE_RERANK,
     USE_QUERY_REWRITE
 )
-from src.ai_client import ask_ai, ask_rag_structured, RAGAnswer
+from src.ai_client import (
+    ask_ai,
+    ask_rag_structured,
+    RAGAnswer,
+    RAGGenerationError
+)
+from rich.console import Console
 
-# ── Relevance gate ────────────────────────────────────────────────
-# If the best retrieved chunk score is below this threshold, the
-# question is considered out-of-domain and the LLM is skipped entirely.
-# This prevents wasted API calls on off-topic questions.
-# Tune this value on your eval set: start at 0.35 and adjust.
-RELEVANCE_GATE_THRESHOLD = 0.35
+# Colored Request ID console
+console = Console()
 
 
 class RAGEngine:
@@ -170,11 +173,29 @@ class RAGEngine:
         2. Build context
         3. Generate answer with LLM
         4. Return answer + sources
+
+        Each query is tracked with a unique Request ID and
+        per-stage latency timings in the trace field.
         """
 
-        print(f"\n🔍 Processing query...")
+        request_id = str(uuid.uuid4())[:8]
+        console.print(
+            f"\n[bold cyan]Request ID:[/bold cyan] [cyan]{request_id}[/cyan]"
+        )
+
+        # Stage timing
+        query_start = time.time()
+        trace = {
+            "request_id": request_id,
+            "timestamp": time.time(),
+            "stages": {},
+            "total_duration_s": 0.0,
+            "total_model_calls": 0,
+            "total_cost_usd": 0.0,
+        }
 
         # ✅ Step 1: Retrieve (merged pipeline - hybrid + rerank)
+        stage_start = time.time()
         print("    Step 1: Retrieving relevant chunks...")
 
         retrieval = self.retriever.retrieve(
@@ -186,9 +207,23 @@ class RAGEngine:
             verbose=True
         )
 
+        trace["stages"]["retrieval"] = {
+            "duration_s": round(time.time() - stage_start, 3),
+        }
+
         chunks = retrieval["chunks"]
 
         if not chunks:
+            trace["stages"]["llm"] = {
+                "duration_s": None,
+                "details": "No chunks retrieved",
+            }
+            trace["total_duration_s"] = round(time.time() - query_start, 3)
+            trace["total_model_calls"] = 0
+            # Display latency (stored in seconds → show as ms)
+            ret_ms = round((time.time() - query_start) * 1000, 1)
+            console.print(f"    Retrieval: {ret_ms} ms")
+            console.print("    LLM: skipped")
             return {
                 "question": question,
                 "answer": (
@@ -199,7 +234,8 @@ class RAGEngine:
                 ),
                 "sources": [],
                 "chunks_used": 0,
-                "context": ""
+                "context": "",
+                "trace": trace,
             }
 
         mode = "+".join(filter(None, [
@@ -213,35 +249,7 @@ class RAGEngine:
 
         # ✅ Step 2: Build prompt with context
         print("    Step 2: Building RAG prompt...")
-
-        # ── Relevance gate: skip LLM if retrieval is clearly off-topic ──
-        best_score = 0.0
-        for c in chunks:
-            s = c.get("rerank_score")
-            if s is None:
-                s = c.get("score", 0)
-            if s is not None and s > best_score:
-                best_score = s
-
-        if best_score < RELEVANCE_GATE_THRESHOLD:
-            print(
-                f"    ⚠️  Relevance gate: best score {best_score:.3f} "
-                f"< {RELEVANCE_GATE_THRESHOLD} — skipping LLM call"
-            )
-            return {
-                "question": question,
-                "answer": (
-                    "I could not find relevant information in the "
-                    "indexed documents to answer your question. "
-                    "Please make sure documents are indexed and try "
-                    "rephrasing your question."
-                ),
-                "sources": [],
-                "chunks_used": len(chunks),
-                "chunks": chunks,
-                "context": "",
-                "retrieval": retrieval
-            }
+        stage_start = time.time()
 
         answer = self.answer_from_chunks(question, chunks)
 
@@ -250,6 +258,19 @@ class RAGEngine:
             for c in chunks
         ))
 
+        trace["stages"]["llm"] = {
+            "duration_s": round(time.time() - stage_start, 3),
+            "details": "answer generated",
+        }
+        trace["total_duration_s"] = round(time.time() - query_start, 3)
+        trace["total_model_calls"] = 1
+
+        # Display latency (stored in seconds → show as ms)
+        ret_ms = trace['stages']['retrieval']['duration_s'] * 1000
+        llm_ms = trace['stages']['llm']['duration_s'] * 1000
+        console.print(f"    Retrieval: {ret_ms:.1f} ms")
+        console.print(f"    LLM: {llm_ms:.1f} ms")
+
         return {
             "question": question,
             "answer": answer,
@@ -257,7 +278,8 @@ class RAGEngine:
             "chunks_used": len(chunks),
             "chunks": chunks,
             "context": build_context(chunks),
-            "retrieval": retrieval
+            "retrieval": retrieval,
+            "trace": trace,
         }
 
     def answer_from_chunks(
@@ -303,6 +325,7 @@ INSTRUCTIONS:
 - If the answer is not in the context, say so clearly
 - Quote relevant parts when helpful
 - Be specific and accurate
+- Keep the answer concise (aim for under 250 words)
 - After every factual claim, cite the chunk_id it came from, in the exact
   form [chunk_id: X] (X is the chunk_id number shown in that context block above)
 - If a claim draws on multiple chunks, cite all of them, e.g. [chunk_id: 3][chunk_id: 7]
@@ -313,10 +336,17 @@ INSTRUCTIONS:
         if verbose:
             print("    Step 3: Generating answer with LLM...")
 
-        result = ask_rag_structured(
-            prompt=rag_prompt,
-            temperature=0.1,
-        )
+        try:
+            result = ask_rag_structured(
+                prompt=rag_prompt,
+                temperature=0.1,
+            )
+        except RAGGenerationError as e:
+            console.print(f"[bold red]⚠️  {e}[/bold red]")
+            return (
+                "⚠️ Something went wrong while generating your answer. "
+                "Please try again in a moment."
+            )
 
         return result.answer
 

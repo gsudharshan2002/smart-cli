@@ -328,3 +328,43 @@ class Evaluator:
             if q["id"] == question_id:
                 return q
         return None
+
+    def measure_latency(self, top_k: int = 3) -> dict:
+        """
+        Measure p50 latency before and after (vector-only vs hybrid+rerank).
+
+        Returns dict with p50 latencies and delta in milliseconds.
+        Used for Evaluation Rubric Criterion 3.
+        """
+        import time
+        import numpy as np
+
+        # Measure vector-only latency
+        vector_durations = []
+        for q in self.questions:
+            start = time.time()
+            self.retriever.retrieve(
+                q["question"], top_k=top_k, use_bm25=False, use_rerank=False
+            )
+            vector_durations.append(time.time() - start)
+
+        # Measure hybrid+rerank latency
+        rerank_durations = []
+        for q in self.questions:
+            start = time.time()
+            self.retriever.retrieve(
+                q["question"], top_k=top_k, use_bm25=True, use_rerank=True
+            )
+            rerank_durations.append(time.time() - start)
+
+        # Calculate p50 (median) latency
+        vector_p50 = np.median(vector_durations) * 1000  # convert to ms
+        rerank_p50 = np.median(rerank_durations) * 1000  # convert to ms
+        latency_delta = rerank_p50 - vector_p50
+
+        return {
+            "vector_p50_ms": round(vector_p50, 1),
+            "rerank_p50_ms": round(rerank_p50, 1),
+            "delta_ms": round(latency_delta, 1),
+            "questions": len(self.questions),
+        }

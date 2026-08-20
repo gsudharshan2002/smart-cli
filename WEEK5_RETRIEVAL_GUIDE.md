@@ -47,7 +47,7 @@ you what to study, what to run, and how to read the numbers.
 
 ## 3. The inspection view (the mentor's #1 check)
 
-Run: RAG → **6. Week 5** → **2. Inspection view**, ask:
+Run: RAG → **6. Retrieval Lab** → **2. Inspection view**, ask:
 
 > "Can I take a second part-time job while working here?"
 

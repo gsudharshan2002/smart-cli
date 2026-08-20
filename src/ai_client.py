@@ -8,6 +8,7 @@ from src.config import (
     BASE_URL,
     DEFAULT_TEMPERATURE,
     DEFAULT_MAX_TOKENS,
+    RAG_MAX_TOKENS,
     DEFAULT_TOP_P
 )
 
@@ -200,6 +201,16 @@ information.  If the answer is not in the context, say so clearly.
 """
 
 
+class RAGGenerationError(Exception):
+    """
+    Raised when the structured RAG LLM call fails after retries
+    (network errors, rate limits, or schema-validation failures).
+
+    The message is user-safe: it never exposes API internals,
+    keys, or raw error payloads.
+    """
+
+
 def ask_rag_structured(
     prompt: str,
     temperature: float = 0.1,
@@ -217,14 +228,39 @@ def ask_rag_structured(
     - No tools / function-calling is ever enabled — this call
       can only produce an answer, so even a successful injection
       can't trigger a destructive action.
+
+    Error handling (not a silent crash — a graceful retry):
+    - A long answer truncated at max_tokens produces invalid JSON,
+      which Groq rejects with 'Failed to parse tool call arguments
+      as JSON'. On failure we retry ONCE with a much larger token
+      budget (RAG_MAX_TOKENS = 4096) so the answer can finish.
+    - If every attempt fails (network, rate limit, schema), a
+      RAGGenerationError with a clean, user-facing message is
+      raised — callers show that instead of a raw API error.
     """
-    return instructor_client.chat.completions.create(
-        model=model,
-        response_model=RAGAnswer,
-        messages=[
-            {"role": "system", "content": RAG_SYSTEM_PROMPT},
-            {"role": "user", "content": prompt}
-        ],
-        temperature=temperature,
-        max_tokens=max_tokens,
-    )
+    budgets = list(dict.fromkeys([max_tokens, RAG_MAX_TOKENS]))
+
+    last_error = None
+    for attempt, budget in enumerate(budgets, 1):
+        try:
+            return instructor_client.chat.completions.create(
+                model=model,
+                response_model=RAGAnswer,
+                messages=[
+                    {"role": "system", "content": RAG_SYSTEM_PROMPT},
+                    {"role": "user", "content": prompt}
+                ],
+                temperature=temperature,
+                max_tokens=budget,
+            )
+        except Exception as e:
+            last_error = e
+            print(
+                f"    ⚠️  RAG API call failed on attempt {attempt}/{len(budgets)} "
+                f"(max_tokens={budget}): {type(e).__name__}"
+            )
+
+    raise RAGGenerationError(
+        "The AI service could not generate an answer right now. "
+        "Please try again in a moment."
+    ) from last_error
