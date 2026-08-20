@@ -1,0 +1,151 @@
+{
+  "set_name": "HR Policies (Topic C) - Week 5 eval",
+  "description": "18 questions over 5 HR documents. Ground truth = the document that actually answers the question. Several questions are deliberately hard for pure semantic search (semantic overlap between docs, or answers only findable by exact numbers/terms).",
+  "top_k": 3,
+  "questions": [
+    {
+      "id": 1,
+      "question": "Can I expense the alcohol I bought at a client dinner?",
+      "expected_source": "Expense_Reimbursement_Policy.docx",
+      "expected_phrase": "alcohol is reimbursable only",
+      "topic": "expense",
+      "why_hard": "Trap: the Code of Conduct has a whole section on 'entertainment' (food/drink from suppliers), so semantic search may pull the wrong document."
+    },
+    {
+      "id": 2,
+      "question": "My hotel in London is expensive - what is the maximum the company pays per night?",
+      "expected_source": "Expense_Reimbursement_Policy.docx",
+      "expected_phrase": "$325 for international travel",
+      "topic": "expense",
+      "why_hard": "The exact number $325 is what answers it; embeddings often miss precise numbers."
+    },
+    {
+      "id": 3,
+      "question": "Do I need to keep a receipt to get reimbursed?",
+      "expected_source": "Expense_Reimbursement_Policy.docx",
+      "expected_phrase": "$25 or more",
+      "topic": "expense",
+      "why_hard": "Answer depends on a threshold ($25) that appears many times in the doc."
+    },
+    {
+      "id": 4,
+      "question": "I drive my own car for work trips. What do I get paid back?",
+      "expected_source": "Expense_Reimbursement_Policy.docx",
+      "expected_phrase": "IRS standard mileage rate",
+      "topic": "expense",
+      "why_hard": "Answer is a proper noun (IRS) + specific rate."
+    },
+    {
+      "id": 5,
+      "question": "My expenses this month total $1,200. Who has to approve them?",
+      "expected_source": "Expense_Reimbursement_Policy.docx",
+      "expected_phrase": "exceeding $1,000",
+      "topic": "expense",
+      "why_hard": "The $1,000 threshold must be matched, not just the word 'approve'."
+    },
+    {
+      "id": 6,
+      "question": "Can I work from home to look after my kids instead of using daycare?",
+      "expected_source": "Remote Work Policy and Application (PDF).pdf",
+      "expected_phrase": "or replacement for childcare",
+      "topic": "remote_work",
+      "why_hard": "The policy explicitly says remote work is NOT for childcare - a semantic search may return a superficially related chunk."
+    },
+    {
+      "id": 7,
+      "question": "The town wants to end my remote work arrangement. How much notice do they have to give?",
+      "expected_source": "Remote Work Policy and Application (PDF).pdf",
+      "expected_phrase": "ten (10) days",
+      "topic": "remote_work",
+      "why_hard": "Answer is a number (10 days) buried in a long legal sentence."
+    },
+    {
+      "id": 8,
+      "question": "Am I covered by workers' compensation if I get injured working from home?",
+      "expected_source": "Remote Work Policy and Application (PDF).pdf",
+      "expected_phrase": "covered by workers",
+      "topic": "remote_work",
+      "why_hard": "'Injury at home' could pull the home-office safety section instead."
+    },
+    {
+      "id": 9,
+      "question": "How often is my routine remote work agreement reviewed?",
+      "expected_source": "Remote Work Policy and Application (PDF).pdf",
+      "expected_phrase": "June 30",
+      "topic": "remote_work",
+      "why_hard": "Answer is a specific date (annually by June 30)."
+    },
+    {
+      "id": 10,
+      "question": "How do I officially ask to work from home?",
+      "expected_source": "Remote Work Policy and Application (PDF).pdf",
+      "expected_phrase": "Remote Work Application",
+      "topic": "remote_work",
+      "why_hard": "Proper noun form name ('Remote Work Application')."
+    },
+    {
+      "id": 11,
+      "question": "Do I get my job back after maternity leave?",
+      "expected_source": "employee-leave-of-absence-policy-template-1030648e4e8880849fc1e686ef6e9066.pdf",
+      "expected_phrase": "guaranteed their position",
+      "topic": "leave",
+      "why_hard": "Maternity leave is one of many leave types in the same document."
+    },
+    {
+      "id": 12,
+      "question": "I've been sick for a while. When do I need to provide a doctor's note?",
+      "expected_source": "employee-leave-of-absence-policy-template-1030648e4e8880849fc1e686ef6e9066.pdf",
+      "expected_phrase": "medical certificate is required for sick leave",
+      "topic": "leave",
+      "why_hard": "Several docs mention sick leave/illness; only this one has the certificate rule."
+    },
+    {
+      "id": 13,
+      "question": "Can I carry over my unused vacation days to next year?",
+      "expected_source": "employee-leave-of-absence-policy-template-1030648e4e8880849fc1e686ef6e9066.pdf",
+      "expected_phrase": "carry over a maximum",
+      "topic": "leave",
+      "why_hard": "'Vacation' also appears in the Remote Work policy's leave section."
+    },
+    {
+      "id": 14,
+      "question": "Can I take a second part-time job while working here?",
+      "expected_source": "code_of_conduct_e.pdf",
+      "expected_phrase": "take up paid outside work",
+      "topic": "code_of_conduct",
+      "why_hard": "Trap: 'part-time' also appears in the Expense and Leave policy scopes."
+    },
+    {
+      "id": 15,
+      "question": "A vendor offered me a gift. Can I keep it?",
+      "expected_source": "code_of_conduct_e.pdf",
+      "expected_phrase": "gifts to the organisation",
+      "topic": "code_of_conduct",
+      "why_hard": "Gift rules live only in the Code of Conduct."
+    },
+    {
+      "id": 16,
+      "question": "I'm choosing suppliers and my cousin owns one of the bidding companies. What do I do?",
+      "expected_source": "code_of_conduct_e.pdf",
+      "expected_phrase": "declare conflict of interest",
+      "topic": "code_of_conduct",
+      "why_hard": "A scenario question - the answer requires matching to the conflict-of-interest rule."
+    },
+    {
+      "id": 17,
+      "question": "What happens if I refuse to learn AI tools at work?",
+      "expected_source": "AI_Adoption_and_Upskilling_Policy.pdf",
+      "expected_phrase": "underperforming against",
+      "topic": "ai_policy",
+      "why_hard": "Consequences section; no other doc covers AI."
+    },
+    {
+      "id": 18,
+      "question": "Where do we document which AI tools our team uses?",
+      "expected_source": "AI_Adoption_and_Upskilling_Policy.pdf",
+      "expected_phrase": "skill.md file",
+      "topic": "ai_policy",
+      "why_hard": "Answer is an exact filename: skill.md."
+    }
+  ]
+}

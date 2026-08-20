@@ -1,12 +1,28 @@
 # src/rag/rag_engine.py - Full RAG Pipeline
 
 import time
+import uuid
 from src.rag.loader import DocumentLoader
 from src.rag.chunker import TextChunker
 from src.rag.embedder import Embedder
 from src.rag.vectordb import VectorDB
-from src.rag.retriever import Retriever
-from src.ai_client import ask_ai
+from src.rag.hybrid import SmartRetriever
+from src.rag.retriever import build_context
+from src.rag.config import (
+    USE_HYBRID,
+    USE_RERANK,
+    USE_QUERY_REWRITE
+)
+from src.ai_client import (
+    ask_ai,
+    ask_rag_structured,
+    RAGAnswer,
+    RAGGenerationError
+)
+from rich.console import Console
+
+# Colored Request ID console
+console = Console()
 
 
 class RAGEngine:
@@ -17,7 +33,8 @@ class RAGEngine:
     PDF → Load → Chunk → Embed → Store in ChromaDB
 
     Query Flow:
-    Question → Embed → Retrieve → LLM → Answer
+    Question → Hybrid retrieve (vector + BM25 + RRF + rerank)
+             → LLM → Answer
     """
 
     def __init__(self):
@@ -25,7 +42,7 @@ class RAGEngine:
         self.chunker = TextChunker()
         self.embedder = Embedder()
         self.db = VectorDB()
-        self.retriever = Retriever()
+        self.retriever = SmartRetriever()
 
 
     def index_document(self, path: str) -> dict:
@@ -156,18 +173,57 @@ class RAGEngine:
         2. Build context
         3. Generate answer with LLM
         4. Return answer + sources
+
+        Each query is tracked with a unique Request ID and
+        per-stage latency timings in the trace field.
         """
 
-        print(f"\n🔍 Processing query...")
-
-        # ✅ Step 1: Retrieve
-        print("    Step 1: Retrieving relevant chunks...")
-        retrieval = self.retriever.retrieve_with_context(
-            query=question,
-            top_k=top_k
+        request_id = str(uuid.uuid4())[:8]
+        console.print(
+            f"\n[bold cyan]Request ID:[/bold cyan] [cyan]{request_id}[/cyan]"
         )
 
-        if not retrieval["found"]:
+        # Stage timing
+        query_start = time.time()
+        trace = {
+            "request_id": request_id,
+            "timestamp": time.time(),
+            "stages": {},
+            "total_duration_s": 0.0,
+            "total_model_calls": 0,
+            "total_cost_usd": 0.0,
+        }
+
+        # ✅ Step 1: Retrieve (merged pipeline - hybrid + rerank)
+        stage_start = time.time()
+        print("    Step 1: Retrieving relevant chunks...")
+
+        retrieval = self.retriever.retrieve(
+            query=question,
+            top_k=top_k,
+            use_bm25=USE_HYBRID,
+            use_rerank=USE_RERANK,
+            use_rewrite=USE_QUERY_REWRITE,
+            verbose=True
+        )
+
+        trace["stages"]["retrieval"] = {
+            "duration_s": round(time.time() - stage_start, 3),
+        }
+
+        chunks = retrieval["chunks"]
+
+        if not chunks:
+            trace["stages"]["llm"] = {
+                "duration_s": None,
+                "details": "No chunks retrieved",
+            }
+            trace["total_duration_s"] = round(time.time() - query_start, 3)
+            trace["total_model_calls"] = 0
+            # Display latency (stored in seconds → show as ms)
+            ret_ms = round((time.time() - query_start) * 1000, 1)
+            console.print(f"    Retrieval: {ret_ms} ms")
+            console.print("    LLM: skipped")
             return {
                 "question": question,
                 "answer": (
@@ -178,20 +234,88 @@ class RAGEngine:
                 ),
                 "sources": [],
                 "chunks_used": 0,
-                "context": ""
+                "context": "",
+                "trace": trace,
             }
+
+        mode = "+".join(filter(None, [
+            "vector" if not USE_HYBRID else "hybrid",
+            "rerank" if USE_RERANK else "",
+            "rewrite" if USE_QUERY_REWRITE else "",
+        ]))
+        print(f"    ℹ️  Retrieval mode: {mode}")
 
         time.sleep(0.4)
 
         # ✅ Step 2: Build prompt with context
         print("    Step 2: Building RAG prompt...")
+        stage_start = time.time()
+
+        answer = self.answer_from_chunks(question, chunks)
+
+        sources = list(set(
+            c["metadata"].get("source", "unknown")
+            for c in chunks
+        ))
+
+        trace["stages"]["llm"] = {
+            "duration_s": round(time.time() - stage_start, 3),
+            "details": "answer generated",
+        }
+        trace["total_duration_s"] = round(time.time() - query_start, 3)
+        trace["total_model_calls"] = 1
+
+        # Display latency (stored in seconds → show as ms)
+        ret_ms = trace['stages']['retrieval']['duration_s'] * 1000
+        llm_ms = trace['stages']['llm']['duration_s'] * 1000
+        console.print(f"    Retrieval: {ret_ms:.1f} ms")
+        console.print(f"    LLM: {llm_ms:.1f} ms")
+
+        return {
+            "question": question,
+            "answer": answer,
+            "sources": sources,
+            "chunks_used": len(chunks),
+            "chunks": chunks,
+            "context": build_context(chunks),
+            "retrieval": retrieval,
+            "trace": trace,
+        }
+
+    def answer_from_chunks(
+        self,
+        question: str,
+        chunks: list,
+        verbose: bool = False
+    ) -> str:
+        """
+        Generate an LLM answer from a given list of chunks.
+
+        Reused by the Week 5 inspection view and failure labeling,
+        so the answer can be judged against exactly what retrieval
+        returned (without running the whole pipeline again).
+
+        Security safeguards:
+        - Context is wrapped in <retrieved_docs> tags (see
+          build_context) so the LLM can identify it as untrusted.
+        - The system prompt explicitly warns the LLM to IGNORE any
+          instructions found inside retrieved content.
+        - This call uses ask_rag_structured which has NO tool/action
+          permissions — it can only produce text, never execute
+          actions even if injection succeeds.
+        - Output is a validated Pydantic model (RAGAnswer) so
+          malformed/injected responses are caught.
+        """
+        context = build_context(chunks)
+
+        if verbose:
+            print("    Step 2: Building RAG prompt...")
 
         rag_prompt = f"""
 You are a helpful assistant that answers questions
 based ONLY on the provided document context.
 
-CONTEXT FROM DOCUMENTS:
-{retrieval['context']}
+{context}
 
 USER QUESTION:
 {question}
@@ -201,35 +325,30 @@ INSTRUCTIONS:
 - If the answer is not in the context, say so clearly
 - Quote relevant parts when helpful
 - Be specific and accurate
+- Keep the answer concise (aim for under 250 words)
 - After every factual claim, cite the chunk_id it came from, in the exact
   form [chunk_id: X] (X is the chunk_id number shown in that context block above)
 - If a claim draws on multiple chunks, cite all of them, e.g. [chunk_id: 3][chunk_id: 7]
 - Do not make up information, and never invent a chunk_id that wasn't shown to you
+- Return your response as structured JSON matching the requested schema
 """
 
-        time.sleep(0.4)
+        if verbose:
+            print("    Step 3: Generating answer with LLM...")
 
-        # ✅ Step 3: Generate answer
-        print("    Step 3: Generating answer with LLM...")
+        try:
+            result = ask_rag_structured(
+                prompt=rag_prompt,
+                temperature=0.1,
+            )
+        except RAGGenerationError as e:
+            console.print(f"[bold red]⚠️  {e}[/bold red]")
+            return (
+                "⚠️ Something went wrong while generating your answer. "
+                "Please try again in a moment."
+            )
 
-        answer = ask_ai(
-            prompt=rag_prompt,
-            system=(
-                "You are a precise document assistant. "
-                "Only answer from provided context. "
-                "Never hallucinate or make up information."
-            ),
-            temperature=0.1
-        )
-
-        return {
-            "question": question,
-            "answer": answer,
-            "sources": retrieval["sources"],
-            "chunks_used": len(retrieval["chunks"]),
-            "chunks": retrieval["chunks"],
-            "context": retrieval["context"]
-        }
+        return result.answer
 
     def reindex_document(self, path: str) -> dict:
         """Force re-index a document"""

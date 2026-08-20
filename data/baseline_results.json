@@ -1,0 +1,146 @@
+[
+  {
+    "id": 1,
+    "question": "Can I expense the alcohol I bought at a client dinner?",
+    "expected_source": "Expense_Reimbursement_Policy.docx",
+    "baseline_hit": true,
+    "baseline_chunk_id": 14,
+    "lat_ms": 16106.377666998014
+  },
+  {
+    "id": 2,
+    "question": "My hotel in London is expensive - what is the maximum the company pays per night?",
+    "expected_source": "Expense_Reimbursement_Policy.docx",
+    "baseline_hit": true,
+    "baseline_chunk_id": 13,
+    "lat_ms": 387.33541699912166
+  },
+  {
+    "id": 3,
+    "question": "Do I need to keep a receipt to get reimbursed?",
+    "expected_source": "Expense_Reimbursement_Policy.docx",
+    "baseline_hit": true,
+    "baseline_chunk_id": 6,
+    "lat_ms": 66.50612499652198
+  },
+  {
+    "id": 4,
+    "question": "I drive my own car for work trips. What do I get paid back?",
+    "expected_source": "Expense_Reimbursement_Policy.docx",
+    "baseline_hit": true,
+    "baseline_chunk_id": 12,
+    "lat_ms": 22.25795899721561
+  },
+  {
+    "id": 5,
+    "question": "My expenses this month total $1,200. Who has to approve them?",
+    "expected_source": "Expense_Reimbursement_Policy.docx",
+    "baseline_hit": true,
+    "baseline_chunk_id": 5,
+    "lat_ms": 19.24187499389518
+  },
+  {
+    "id": 6,
+    "question": "Can I work from home to look after my kids instead of using daycare?",
+    "expected_source": "Remote Work Policy and Application (PDF).pdf",
+    "baseline_hit": true,
+    "baseline_chunk_id": 39,
+    "lat_ms": 66.72687500395114
+  },
+  {
+    "id": 7,
+    "question": "The town wants to end my remote work arrangement. How much notice do they have to give?",
+    "expected_source": "Remote Work Policy and Application (PDF).pdf",
+    "baseline_hit": true,
+    "baseline_chunk_id": 56,
+    "lat_ms": 37.439542000356596
+  },
+  {
+    "id": 8,
+    "question": "Am I covered by workers' compensation if I get injured working from home?",
+    "expected_source": "Remote Work Policy and Application (PDF).pdf",
+    "baseline_hit": true,
+    "baseline_chunk_id": 51,
+    "lat_ms": 22.236042001168244
+  },
+  {
+    "id": 9,
+    "question": "How often is my routine remote work agreement reviewed?",
+    "expected_source": "Remote Work Policy and Application (PDF).pdf",
+    "baseline_hit": true,
+    "baseline_chunk_id": 29,
+    "lat_ms": 29.017958004260436
+  },
+  {
+    "id": 10,
+    "question": "How do I officially ask to work from home?",
+    "expected_source": "Remote Work Policy and Application (PDF).pdf",
+    "baseline_hit": true,
+    "baseline_chunk_id": 6,
+    "lat_ms": 11.090792002505623
+  },
+  {
+    "id": 11,
+    "question": "Do I get my job back after maternity leave?",
+    "expected_source": "employee-leave-of-absence-policy-template-1030648e4e8880849fc1e686ef6e9066.pdf",
+    "baseline_hit": true,
+    "baseline_chunk_id": 12,
+    "lat_ms": 21.715499999118038
+  },
+  {
+    "id": 12,
+    "question": "I've been sick for a while. When do I need to provide a doctor's note?",
+    "expected_source": "employee-leave-of-absence-policy-template-1030648e4e8880849fc1e686ef6e9066.pdf",
+    "baseline_hit": true,
+    "baseline_chunk_id": 9,
+    "lat_ms": 70.12787500570994
+  },
+  {
+    "id": 13,
+    "question": "Can I carry over my unused vacation days to next year?",
+    "expected_source": "employee-leave-of-absence-policy-template-1030648e4e8880849fc1e686ef6e9066.pdf",
+    "baseline_hit": true,
+    "baseline_chunk_id": 31,
+    "lat_ms": 50.56891699496191
+  },
+  {
+    "id": 14,
+    "question": "Can I take a second part-time job while working here?",
+    "expected_source": "code_of_conduct_e.pdf",
+    "baseline_hit": false,
+    "baseline_chunk_id": null,
+    "lat_ms": 50.71370799851138
+  },
+  {
+    "id": 15,
+    "question": "A vendor offered me a gift. Can I keep it?",
+    "expected_source": "code_of_conduct_e.pdf",
+    "baseline_hit": true,
+    "baseline_chunk_id": 47,
+    "lat_ms": 17.23899999342393
+  },
+  {
+    "id": 16,
+    "question": "I'm choosing suppliers and my cousin owns one of the bidding companies. What do I do?",
+    "expected_source": "code_of_conduct_e.pdf",
+    "baseline_hit": true,
+    "baseline_chunk_id": 51,
+    "lat_ms": 29.778833995806053
+  },
+  {
+    "id": 17,
+    "question": "What happens if I refuse to learn AI tools at work?",
+    "expected_source": "AI_Adoption_and_Upskilling_Policy.pdf",
+    "baseline_hit": true,
+    "baseline_chunk_id": 2,
+    "lat_ms": 23.083459003828466
+  },
+  {
+    "id": 18,
+    "question": "Where do we document which AI tools our team uses?",
+    "expected_source": "AI_Adoption_and_Upskilling_Policy.pdf",
+    "baseline_hit": true,
+    "baseline_chunk_id": 6,
+    "lat_ms": 26.104541997483466
+  }
+]

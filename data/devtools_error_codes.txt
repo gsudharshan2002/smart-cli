@@ -1,0 +1,23 @@
+DEVELOPER TOOLS ERROR CODE REFERENCE
+
+Every error returned by the Developer Tools backend has a stable code that integrators should handle explicitly. Any unrecognised response is surfaced as GenericError.
+
+ERR_AUTH_INVALID_KEY
+
+The API key provided in the DEVTOOLS_API_KEY environment variable is invalid or has expired. Verify that the key is current in the admin console and that the environment variable is exported in the running process. HTTP status 403 is returned to the caller for this error.
+
+ERR_RETRY_EXHAUSTED
+
+retry() gave up after max_retries attempts without a successful response. The usual fix is a larger retry_backoff_ms for slow endpoints, or raising max_retries. HTTP status 500 is returned for this error case.
+
+ERR_HTTP_429_RATE_LIMIT
+
+The backend rejected the request because the caller exceeded the rate limit for the current API key tier. The response includes a Retry-After header. Integrators should respect this header and never retry faster than it allows.
+
+ERR_TIMEOUT
+
+The backend did not respond within the configured timeout_s window. This is often caused by a slow network or a very large payload. Consider raising timeout_s or switching the endpoint region.
+
+ERR_OFFLINE_UNAVAILABLE
+
+The SDK entered offline mode via the offline_mode flag but a queued request could not be replayed when connectivity returned, usually because the backend rejected the payload on replay.

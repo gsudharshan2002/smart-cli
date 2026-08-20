@@ -1,8 +1,26 @@
 import re
 
-from src.rag.config import CHUNK_SIZE, CHUNK_OVERLAP
+from src.rag.config import CHUNK_SIZE, CHUNK_OVERLAP, MAX_CHUNK_CHARS
 
 PAGE_MARKER_RE = re.compile(r"\[Page (\d+)\]")
+
+
+def estimate_tokens(text: str) -> int:
+    """
+    Rough token count (1 token ≈ 4 chars).
+    Cheap heuristic — no heavy tokenizer dependency.
+    """
+    return len(text) // 4
+
+
+def truncate_to_max_tokens(text: str) -> str:
+    """
+    Hard-truncate text so it never exceeds MAX_CHUNK_CHARS.
+    Prevents individual chunks from becoming prompt bombs.
+    """
+    if len(text) <= MAX_CHUNK_CHARS:
+        return text
+    return text[:MAX_CHUNK_CHARS].rsplit(" ", 1)[0]
 
 
 class TextChunker:
@@ -72,6 +90,8 @@ class TextChunker:
 
             # ✅ Extract chunk
             chunk_text = text[start:end].strip()
+            # Enforce hard token cap (security: prevents huge chunks)
+            chunk_text = truncate_to_max_tokens(chunk_text)
 
             if chunk_text:
                 chunks.append({
@@ -203,7 +223,9 @@ class StructureChunker:
                     cid += 1
             else:
                 # Normal section -> one chunk for the whole body
+                # (truncated to hard token cap if the section is huge)
                 chunk_text_ = f"{heading_title}\n{body}"
+                chunk_text_ = truncate_to_max_tokens(chunk_text_)
                 chunks.append({
                     "id": f"{source}_structure_{cid}",
                     "text": chunk_text_,

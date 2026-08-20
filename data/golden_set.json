@@ -1,0 +1,311 @@
+{
+  "description": "12-question golden set for RAG evaluation",
+  "questions": [
+    {
+      "id": 1,
+      "question": "What is the maximum hotel reimbursement for international trips?",
+      "expected_source": "Expense_Reimbursement_Policy.docx",
+      "expected_phrase": "325",
+      "topic": "expense",
+      "token_type": "exact_dollar",
+      "why_hard": "Embeddings match \"hotel\" and \"reimbursement\" but may miss exact $325 token",
+      "baseline_hit": true,
+      "baseline_chunk_id": 13,
+      "retreived_chunks": [
+        {
+          "src": "Expense_Reimbursement_Policy.docx",
+          "cid": 13
+        },
+        {
+          "src": "Expense_Reimbursement_Policy.docx",
+          "cid": 12
+        },
+        {
+          "src": "Expense_Reimbursement_Policy.docx",
+          "cid": 10
+        }
+      ]
+    },
+    {
+      "id": 2,
+      "question": "What rate do I get reimbursed for driving my car for work trips?",
+      "expected_source": "Expense_Reimbursement_Policy.docx",
+      "expected_phrase": "IRS standard mileage rate",
+      "topic": "expense",
+      "token_type": "exact_phrase",
+      "why_hard": "Proper noun \"IRS standard mileage rate\" - semantic may match related text",
+      "baseline_hit": true,
+      "baseline_chunk_id": 12,
+      "retreived_chunks": [
+        {
+          "src": "Expense_Reimbursement_Policy.docx",
+          "cid": 12
+        },
+        {
+          "src": "Expense_Reimbursement_Policy.docx",
+          "cid": 11
+        },
+        {
+          "src": "Expense_Reimbursement_Policy.docx",
+          "cid": 10
+        }
+      ]
+    },
+    {
+      "id": 3,
+      "question": "How many days notice is given when remote work arrangements end?",
+      "expected_source": "Remote Work Policy and Application (PDF).pdf",
+      "expected_phrase": "ten (10) days",
+      "topic": "remote_work",
+      "token_type": "exact_number",
+      "why_hard": "Number 10 buried in legal text",
+      "baseline_hit": true,
+      "baseline_chunk_id": 56,
+      "retreived_chunks": [
+        {
+          "src": "Remote Work Policy and Application (PDF).pdf",
+          "cid": 56
+        },
+        {
+          "src": "Remote Work Policy and Application (PDF).pdf",
+          "cid": 28
+        },
+        {
+          "src": "Remote Work Policy and Application (PDF).pdf",
+          "cid": 55
+        }
+      ]
+    },
+    {
+      "id": 4,
+      "question": "Where do we document which AI tools our team uses?",
+      "expected_source": "AI_Adoption_and_Upskilling_Policy.pdf",
+      "expected_phrase": "skill.md file",
+      "topic": "ai",
+      "token_type": "symbol",
+      "why_hard": "Exact filename skill.md - semantic may find related docs",
+      "baseline_hit": true,
+      "baseline_chunk_id": 6,
+      "retreived_chunks": [
+        {
+          "src": "AI_Adoption_and_Upskilling_Policy.pdf",
+          "cid": 6
+        },
+        {
+          "src": "AI_Adoption_and_Upskilling_Policy.pdf",
+          "cid": 17
+        },
+        {
+          "src": "AI_Adoption_and_Upskilling_Policy.pdf",
+          "cid": 16
+        }
+      ]
+    },
+    {
+      "id": 5,
+      "question": "Can I take a second part-time job while working here?",
+      "expected_source": "code_of_conduct_e.pdf",
+      "expected_phrase": "take up paid outside work",
+      "topic": "policy",
+      "token_type": "semantic",
+      "why_hard": "Part-time appears in multiple docs (Remote Work, Leave) - code of conduct is only place with \"outside work\" rule",
+      "baseline_hit": false,
+      "baseline_chunk_id": null,
+      "retreived_chunks": [
+        {
+          "src": "Remote Work Policy and Application (PDF).pdf",
+          "cid": 15
+        },
+        {
+          "src": "Remote Work Policy and Application (PDF).pdf",
+          "cid": 6
+        },
+        {
+          "src": "Remote Work Policy and Application (PDF).pdf",
+          "cid": 5
+        }
+      ]
+    },
+    {
+      "id": 6,
+      "question": "Can I expense the alcohol I bought at a client dinner?",
+      "expected_source": "Expense_Reimbursement_Policy.docx",
+      "expected_phrase": "alcohol is reimbursable only",
+      "topic": "expense",
+      "token_type": "trap",
+      "why_hard": "Code of Conduct has \"entertainment\" section on gifts - semantic may pull wrong doc",
+      "baseline_hit": true,
+      "baseline_chunk_id": 14,
+      "retreived_chunks": [
+        {
+          "src": "Expense_Reimbursement_Policy.docx",
+          "cid": 14
+        },
+        {
+          "src": "Expense_Reimbursement_Policy.docx",
+          "cid": 13
+        },
+        {
+          "src": "Expense_Reimbursement_Policy.docx",
+          "cid": 15
+        }
+      ]
+    },
+    {
+      "id": 7,
+      "question": "A vendor offered me a gift. Can I keep it?",
+      "expected_source": "code_of_conduct_e.pdf",
+      "expected_phrase": "gifts to the organisation",
+      "topic": "policy",
+      "token_type": "semantic",
+      "why_hard": "Gift/travel sections in multiple docs",
+      "baseline_hit": true,
+      "baseline_chunk_id": 47,
+      "retreived_chunks": [
+        {
+          "src": "code_of_conduct_e.pdf",
+          "cid": 47
+        },
+        {
+          "src": "code_of_conduct_e.pdf",
+          "cid": 16
+        },
+        {
+          "src": "code_of_conduct_e.pdf",
+          "cid": 49
+        }
+      ]
+    },
+    {
+      "id": 8,
+      "question": "Do I need to keep a receipt to get reimbursed?",
+      "expected_source": "Expense_Reimbursement_Policy.docx",
+      "expected_phrase": "25 or more",
+      "topic": "expense",
+      "token_type": "exact_number",
+      "why_hard": "Threshold $25 appears multiple times",
+      "baseline_hit": true,
+      "baseline_chunk_id": 6,
+      "retreived_chunks": [
+        {
+          "src": "Expense_Reimbursement_Policy.docx",
+          "cid": 6
+        },
+        {
+          "src": "Expense_Reimbursement_Policy.docx",
+          "cid": 5
+        },
+        {
+          "src": "Expense_Reimbursement_Policy.docx",
+          "cid": 21
+        }
+      ]
+    },
+    {
+      "id": 9,
+      "question": "How do I officially ask to work from home?",
+      "expected_source": "Remote Work Policy and Application (PDF).pdf",
+      "expected_phrase": "Remote Work Application",
+      "topic": "remote_work",
+      "token_type": "proper_noun",
+      "why_hard": "Proper noun form of the process name",
+      "baseline_hit": true,
+      "baseline_chunk_id": 6,
+      "retreived_chunks": [
+        {
+          "src": "Remote Work Policy and Application (PDF).pdf",
+          "cid": 6
+        },
+        {
+          "src": "Remote Work Policy and Application (PDF).pdf",
+          "cid": 13
+        },
+        {
+          "src": "Remote Work Policy and Application (PDF).pdf",
+          "cid": 34
+        }
+      ]
+    },
+    {
+      "id": 10,
+      "question": "Am I covered by workers compensation if I get injured working from home?",
+      "expected_source": "Remote Work Policy and Application (PDF).pdf",
+      "expected_phrase": "covered by workers",
+      "topic": "remote_work",
+      "token_type": "semantic",
+      "why_hard": "Workers comp appears in multiple docs - need remote-work specific",
+      "baseline_hit": true,
+      "baseline_chunk_id": 51,
+      "retreived_chunks": [
+        {
+          "src": "Remote Work Policy and Application (PDF).pdf",
+          "cid": 51
+        },
+        {
+          "src": "Remote Work Policy and Application (PDF).pdf",
+          "cid": 52
+        },
+        {
+          "src": "Remote Work Policy and Application (PDF).pdf",
+          "cid": 50
+        }
+      ]
+    },
+    {
+      "id": 11,
+      "question": "Can I carry over my unused vacation days to next year?",
+      "expected_source": "employee-leave-of-absence-policy-template-1030648e4e8880849fc1e686ef6e9066.pdf",
+      "expected_phrase": "carry over a maximum",
+      "topic": "leave",
+      "token_type": "semantic",
+      "why_hard": "\"Vacation\" also appears in Remote Work policy",
+      "baseline_hit": true,
+      "baseline_chunk_id": 31,
+      "retreived_chunks": [
+        {
+          "src": "employee-leave-of-absence-policy-template-1030648e4e8880849fc1e686ef6e9066.pdf",
+          "cid": 31
+        },
+        {
+          "src": "employee-leave-of-absence-policy-template-1030648e4e8880849fc1e686ef6e9066.pdf",
+          "cid": 6
+        },
+        {
+          "src": "employee-leave-of-absence-policy-template-1030648e4e8880849fc1e686ef6e9066.pdf",
+          "cid": 7
+        }
+      ]
+    },
+    {
+      "id": 12,
+      "question": "What happens if I refuse to learn AI tools at work?",
+      "expected_source": "AI_Adoption_and_Upskilling_Policy.pdf",
+      "expected_phrase": "underperforming against",
+      "topic": "ai",
+      "token_type": "semantic",
+      "why_hard": "Consequences section unique to AI policy",
+      "baseline_hit": true,
+      "baseline_chunk_id": 2,
+      "retreived_chunks": [
+        {
+          "src": "AI_Adoption_and_Upskilling_Policy.pdf",
+          "cid": 2
+        },
+        {
+          "src": "AI_Adoption_and_Upskilling_Policy.pdf",
+          "cid": 5
+        },
+        {
+          "src": "AI_Adoption_and_Upskilling_Policy.pdf",
+          "cid": 26
+        }
+      ]
+    }
+  ],
+  "baseline_metrics": {
+    "hit_rate": 0.9166666666666666,
+    "hits": 11,
+    "total": 12,
+    "p50_latency_ms": 118.38316699868301
+  }
+}

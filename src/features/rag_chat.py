@@ -1,22 +1,22 @@
-# src/features/rag_chat.py - RAG CLI Feature
+# src/features/rag_chat.py - RAG CLI Feature (Plain CLI Chat)
 
 from src.rag.rag_engine import RAGEngine
+from src.features.retrieval_lab import run as run_lab
 from src.utils.printer import (
     print_feature_header,
     print_concept,
-    print_response,
-    type_response,
     print_step,
     print_thinking,
     print_info,
     print_divider,
-    print_prompt,
     print_success,
     print_error,
-    print_table
+    print_table,
+    type_response
 )
 from src.utils.menu import get_user_input
 from rich.console import Console
+import os
 
 console = Console()
 
@@ -85,10 +85,57 @@ def index_documents(engine: RAGEngine):
     return True
 
 
-def chat_with_documents(engine: RAGEngine):
-    """Interactive chat with documents"""
+def show_chunk_details(result: dict):
+    """Print per-chunk retrieval details + latency for the last answer."""
+    chunks = result.get("chunks", [])
+    if not chunks:
+        print_info("No chunk details available for the last answer.")
+        return
 
-    # ✅ Check DB has data
+    rows = []
+    for c in chunks:
+        meta = c.get("metadata", {})
+
+        def fmt(v):
+            if isinstance(v, float):
+                return f"{v:.3f}"
+            return "-" if v is None else str(v)
+
+        rows.append([
+            str(len(rows) + 1),
+            str(meta.get("chunk_id", "?")),
+            str(meta.get("source", "?")),
+            str(meta.get("page", "?")),
+            fmt(c.get("vector_score")),
+            fmt(c.get("bm25_rank")),
+            fmt(c.get("rrf_rank")),
+            fmt(c.get("rerank_score")),
+            c["text"][:55].replace("\n", " "),
+        ])
+
+    print_table(
+        title="Retrieved chunks (last answer)",
+        columns=["#", "ChunkID", "Source", "Page", "Vector", "BM25#", "RRF#", "Rerank", "Snippet"],
+        rows=rows
+    )
+
+    trace = result.get("trace", {})
+    if trace:
+        stages = trace.get("stages", {})
+        ret_s = stages.get("retrieval", {}).get("duration_s") or 0
+        llm_s = stages.get("llm", {}).get("duration_s") or 0
+        print_info(
+            f"Request {trace.get('request_id')} — "
+            f"retrieval {ret_s * 1000:.1f} ms, "
+            f"LLM {llm_s * 1000:.1f} ms, "
+            f"total {trace.get('total_duration_s', 0) * 1000:.1f} ms, "
+            f"model calls {trace.get('total_model_calls', 0)}"
+        )
+
+
+def chat_with_documents(engine: RAGEngine):
+    """Interactive chat with documents (plain CLI)."""
+
     stats = engine.get_stats()
 
     if stats["total_chunks"] == 0:
@@ -98,29 +145,18 @@ def chat_with_documents(engine: RAGEngine):
         )
         return
 
+    history = []
+    last_result = None
+
     print_success(
-        f"Ready to chat! "
-        f"{stats['total_chunks']} chunks indexed from "
-        f"{len(stats['documents'])} documents"
+        f"Ready to chat! {stats['total_chunks']} chunks from {len(stats['documents'])} docs\n"
+        f"Retrieval: hybrid (vector + BM25, RRF) + cross-encoder rerank"
     )
-
-    print_info(
-        "Ask any question about your documents!\n"
-        "Type 'quit' to stop chatting\n"
-        "Type 'sources' to see what's indexed"
-    )
-
+    print_info("Commands: quit | details | sources | clear")
     print_divider()
 
-    # ✅ Chat loop
-    question_count = 0
-
     while True:
-        question_count += 1
-
-        question = get_user_input(
-            f"\n💬 Question {question_count}: "
-        )
+        question = get_user_input("💬 Question: ").strip()
 
         if not question:
             continue
@@ -129,57 +165,51 @@ def chat_with_documents(engine: RAGEngine):
             print_success("Chat ended!")
             break
 
-        if question.lower() == "sources":
-            show_documents(engine)
+        if question.lower() == "details":
+            if last_result:
+                show_chunk_details(last_result)
+            else:
+                print_info("Ask a question first, then type 'details'.")
+            print_divider()
             continue
 
-        print_divider()
-        print_prompt(f"Your Question:\n{question}")
+        if question.lower() == "sources":
+            show_documents(engine)
+            print_divider()
+            continue
 
+        if question.lower() == "clear":
+            history.clear()
+            last_result = None
+            print_info("History cleared!")
+            continue
+
+        # Show thinking indicator
         print_thinking()
 
-        # ✅ Full RAG query
-        result = engine.query(
-            question=question,
-            top_k=3
-        )
+        # Full RAG query
+        result = engine.query(question=question, top_k=3)
 
-        # ✅ Show answer (streamed like real AI chat)
-        type_response(result["answer"], title="RAG Answer")
+        # Stream the answer like a typewriter
+        type_response(result["answer"], title="Answer")
 
-        # ✅ Show sources
-        print_info(
-            f"📚 Sources used: "
-            f"{', '.join(result['sources'])}\n"
-            f"🔍 Chunks retrieved: {result['chunks_used']}"
-        )
+        last_result = result
+        history.append((question, result["answer"]))
 
-        # ✅ Show retrieved chunks detail
-        show_chunks = get_user_input(
-            "Show retrieved chunks? (yes/no): "
-        )
-
-        if show_chunks.lower() in ["yes", "y"]:
-            for i, chunk in enumerate(
-                result.get("chunks", []), 1
-            ):
-                print_info(
-                    f"Chunk {i}:\n"
-                    f"  Source: {chunk['metadata'].get('source')}\n"
-                    f"  Score:  {round(chunk['score'], 3)}\n"
-                    f"  Text:   {chunk['text'][:300]}..."
-                )
-
-        print_divider()
+        if result["sources"]:
+            print_info(
+                f"Sources: {', '.join(result['sources'])}"
+            )
+        print_info("Type 'details' to see chunk_id / page / scores / latency")
 
 
 def run():
-    """RAG Chat Feature"""
+    """RAG Chat Feature with Plain CLI"""
 
-    # ✅ Header
+    # Header
     print_feature_header("RAG — Document Q&A")
 
-    # ✅ Explain concept
+    # Explain concept
     print_concept(
         "What is RAG?",
         "RAG = Retrieval Augmented Generation\n\n"
@@ -199,29 +229,32 @@ def run():
         "      ↓\n"
         "  Embed Question\n"
         "      ↓\n"
-        "  Find Similar Chunks\n"
+        "  Find Similar Chunks (hybrid + rerank)\n"
         "      ↓\n"
         "  Send to LLM with Context\n"
         "      ↓\n"
         "  Accurate Answer from YOUR docs!\n\n"
         "Stack:\n"
-        "  📄 Loader    → pypdf (PDF reader)\n"
-        "  ✂️  Chunker   → Smart text splitter\n"
-        "  🔢 Embedder  → all-MiniLM-L6-v2 (FREE)\n"
-        "  🗄️  Vector DB → ChromaDB (LOCAL)\n"
-        "  🤖 LLM       → Groq llama-3.3-70b"
+        "  Loader    -> pypdf (PDF reader)\n"
+        "  Chunker   -> Smart text splitter\n"
+        "  Embedder  -> all-MiniLM-L6-v2 (free)\n"
+        "  VectorDB  -> ChromaDB (local)\n"
+        "  Keyword   -> BM25 + RRF hybrid fusion\n"
+        "  Reranker  -> cross-encoder/ms-marco-MiniLM-L-6-v2\n"
+        "  LLM       -> Groq gpt-oss-20b\n\n"
+        "UI: Plain CLI — type your question, get the answer streamed"
     )
 
     print_divider()
 
-    # ✅ Initialize RAG Engine
+    # Initialize RAG Engine
     print_step("Init", "Starting RAG Engine...")
     engine = RAGEngine()
     print_success("RAG Engine ready!")
 
     print_divider()
 
-    # ✅ Main RAG Menu loop
+    # Main RAG Menu loop
     while True:
         console.print(
             "\n[bold cyan]RAG Options:[/bold cyan]\n"
@@ -230,6 +263,7 @@ def run():
             "  [green]3[/green] → Chat with documents\n"
             "  [green]4[/green] → Re-index a document\n"
             "  [green]5[/green] → Clear database\n"
+            "  [green]6[/green] → Retrieval Lab (dev tools)\n"
             "  [green]0[/green] → Back to main menu\n"
         )
 
@@ -259,10 +293,9 @@ def run():
             show_documents(engine)
 
             doc_name = get_user_input(
-                "📝 Enter document name to re-index: "
+                "Enter document name to re-index: "
             )
 
-            import os
             from src.rag.config import DATA_PATH
             doc_path = os.path.join(DATA_PATH, doc_name)
 
@@ -284,7 +317,7 @@ def run():
             print_divider()
 
             confirm = get_user_input(
-                "⚠️  Delete ALL indexed data? (yes/no): "
+                "Delete ALL indexed data? (yes/no): "
             )
 
             if confirm.lower() in ["yes", "y"]:
@@ -292,6 +325,10 @@ def run():
                 print_success("Database cleared!")
             else:
                 print_info("Cancelled!")
+
+        elif choice == "6":
+            print_divider()
+            run_lab(engine)
 
         else:
             print_error("Invalid option!")

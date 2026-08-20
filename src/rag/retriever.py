@@ -3,6 +3,42 @@ from src.rag.vectordb import VectorDB
 from src.rag.config import TOP_K
 
 
+def build_context(chunks: list) -> str:
+    """
+    Turn retrieved chunks into the context block for the LLM.
+
+    Each chunk line:
+    [chunk_id: X | Source: file.pdf | Relevance: 0.87]
+    <chunk text>
+
+    The entire context is wrapped in <retrieved_docs> tags so the
+    downstream LLM prompt can explicitly mark it as untrusted content
+    that must never be followed as instructions.  See RAG_SYSTEM_PROMPT
+    in rag_engine.py for the corresponding warning.
+    """
+    context_parts = []
+
+    for i, chunk in enumerate(chunks, 1):
+        source = chunk["metadata"].get("source", "unknown")
+        chunk_id = chunk["metadata"].get("chunk_id")
+        score = round(chunk["score"], 3)
+        context_parts.append(
+            f"[chunk_id: {chunk_id} | Source: {source} | "
+            f"Relevance: {score}]\n"
+            f"{chunk['text']}"
+        )
+
+    inner = "\n\n---\n\n".join(context_parts)
+
+    return (
+        "<retrieved_docs>\n"
+        "--- BEGIN RETRIEVED DOCUMENT CONTENT ---\n"
+        f"{inner}\n"
+        "--- END RETRIEVED DOCUMENT CONTENT ---\n"
+        "</retrieved_docs>"
+    )
+
+
 class Retriever:
     """
     Retrieves most relevant chunks
@@ -85,27 +121,16 @@ class Retriever:
             }
 
         # ✅ Build context from chunks
-        context_parts = []
-        sources = set()
-
-        for i, chunk in enumerate(chunks, 1):
-            source = chunk["metadata"].get("source", "unknown")
-            chunk_id = chunk["metadata"].get("chunk_id")
-            score = round(chunk["score"], 3)
-            sources.add(source)
-
-            context_parts.append(
-                f"[chunk_id: {chunk_id} | Source: {source} | "
-                f"Relevance: {score}]\n"
-                f"{chunk['text']}"
-            )
-
-        context = "\n\n---\n\n".join(context_parts)
+        context = build_context(chunks)
+        sources = list(set(
+            chunk["metadata"].get("source", "unknown")
+            for chunk in chunks
+        ))
 
         return {
             "chunks": chunks,
             "context": context,
-            "sources": list(sources),
+            "sources": sources,
             "found": True
         }
 

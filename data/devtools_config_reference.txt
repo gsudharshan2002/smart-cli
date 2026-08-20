@@ -1,0 +1,23 @@
+DEVELOPER TOOLS CONFIGURATION REFERENCE
+
+This reference lists every configuration option read by the DevTools Client SDK and the version in which it was introduced. Options are read from environment variables at startup where noted.
+
+DEVTOOLS_API_KEY
+
+The DEVTOOLS_API_KEY environment variable holds the required API key used for authentication on connect(). It was introduced in v1.0.0. The value must be a valid key string generated in the admin console. If the variable is unset, connect() raises an AuthError immediately.
+
+retry_backoff_ms
+
+The retry_backoff_ms option sets the base delay in milliseconds between retry attempts. The default retry_backoff_ms value is 500. It was introduced in v2.0.0 and must be a positive integer. The effective delay is fixed in v2 and doubles per attempt in v3.2.0 and later under exponential backoff.
+
+max_retries
+
+The max_retries option caps the maximum number of retry attempts before retry() raises RetryError. The default is 5 and it was introduced in v2.0.0. Setting max_retries to 0 disables retries entirely and retry() then behaves like send().
+
+timeout_s
+
+The timeout_s option sets the request timeout in seconds. The default is 10 and it was introduced in v1.4.0. A request that takes longer than timeout_s raises ERR_TIMEOUT. Raise timeout_s for slow endpoints or large payloads.
+
+offline_mode
+
+The offline_mode flag was introduced in v3.2.0. When true, retry() queues requests locally when the network is unavailable and replays them when connectivity returns. The default is false.
